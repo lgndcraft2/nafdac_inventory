@@ -1,0 +1,146 @@
+from flask import Flask, jsonify, request, session, render_template, redirect, url_for
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import timedelta, datetime
+from flask_mail import Mail, Message
+from .models import db, User, Equipment
+
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'findThisOutBitch'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db.init_app(app)
+
+mail = Mail(app)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(minutes=60)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.get(User, int(user_id))
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/dashboard')
+#@login_required()
+def dashboard():
+    return render_template('dashboard.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    return render_template('login.html')
+
+@app.route('/api/equipments', methods=['GET'])
+def get_equipments():
+    equipments = Equipment.query.all()
+    return jsonify([eq.to_dict() for eq in equipments])
+
+@app.route('/api/equipments/<int:equipment_id>', methods=['GET'])
+def get_equipment(equipment_id):
+    equipment = Equipment.query.get_or_404(equipment_id)
+    return jsonify(equipment.to_dict())
+
+@app.route('/api/add_equipments', methods=['POST'])
+def add_equipment():
+    data = request.json
+
+    calibration_date = (
+        datetime.strptime(data.get('calibration_date'), "%Y-%m-%d").date()
+        if data.get('calibration_date') else None
+    )
+    maintenance_date = (
+        datetime.strptime(data.get('maintenance_date'), "%Y-%m-%d").date()
+        if data.get('maintenance_date') else None
+    )
+
+    new_equipment = Equipment(
+        name=data.get('name'),
+        manufacturer=data.get('manufacturer'),
+        model=data.get('model'),
+        serial_number=data.get('serial_number'),
+        new_id_number=data.get('new_id_number'),
+        location=data.get('location'),
+        calibration_frequency=data.get('calibration_frequency'),
+        calibration_date=calibration_date,
+        maintenance_frequency=data.get('maintenance_frequency'),
+        maintenance_date=maintenance_date,
+        description=data.get('description'),
+        quantity=data.get('quantity', 1)
+    )
+    db.session.add(new_equipment)
+    db.session.commit()
+    return jsonify(new_equipment.to_dict()), 201
+
+@app.route('/addEquipment', methods=['GET', 'POST'])
+def add_equipment_page():
+    return render_template('addEquipment.html')
+
+@app.route('/api/equipments/<int:equipment_id>', methods=['PUT'])
+@login_required
+def update_equipment(equipment_id):
+    equipment = Equipment.query.get_or_404(equipment_id)
+    data = request.json
+
+    equipment.name = data.get('name', equipment.name)
+    equipment.manufacturer = data.get('manufacturer', equipment.manufacturer)
+    equipment.model = data.get('model', equipment.model)
+    equipment.serial_number = data.get('serial_number', equipment.serial_number)
+    equipment.new_id_number = data.get('new_id_number', equipment.new_id_number)
+    equipment.location = data.get('location', equipment.location)
+    equipment.calibration_frequency = data.get('calibration_frequency', equipment.calibration_frequency)
+    equipment.calibration_date = data.get('calibration_date', equipment.calibration_date)
+    equipment.maintenance_frequency = data.get('maintenance_frequency', equipment.maintenance_frequency)
+    equipment.maintenance_date = data.get('maintenance_date', equipment.maintenance_date)
+    equipment.description = data.get('description', equipment.description)
+    equipment.quantity = data.get('quantity', equipment.quantity)
+
+    equipment.set_next_calibration_date()
+    equipment.set_next_maintenance_date()
+
+    db.session.commit()
+    return jsonify(equipment.to_dict())
+
+@app.route('/api/equipments/<int:equipment_id>', methods=['DELETE'])
+@login_required
+def delete_equipment(equipment_id):
+    equipment = Equipment.query.get_or_404(equipment_id)
+    db.session.delete(equipment)
+    db.session.commit()
+    return jsonify({"message": "Equipment deleted"}), 200
+
+@app.route('/api/check-id-uniqueness')
+def check_id_uniqueness():
+    new_id = request.args.get('id')  # grab ?id=... from query string
+    if not new_id:
+        return jsonify({"error": "Missing ID parameter"}), 400
+
+    # Check if the ID exists in the database
+    existing = Equipment.query.filter_by(new_id_number=new_id).first()
+
+    return jsonify({"isUnique": existing is None})
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
+
+with app.app_context():
+    db.create_all()
+
+if __name__ == "__main__":
+    app.run(debug=True)

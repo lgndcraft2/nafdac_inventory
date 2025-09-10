@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Equipment{% endblock %}
+{% block head %} <link rel="stylesheet" href="{{ url_for('static', filename='css/addEquipment.css') }}"> {% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-header">
+        <h1 class="form-title">Equipment Registration</h1>
+        <p class="form-subtitle">Add new equipment to inventory system</p>
+    </div>
+
+    <form id="equipmentForm">
+        <div class="form-grid">
+            <div class="form-group">
+                <input type="text" name="name" placeholder="Equipment Name" required>
+                <div class="error-message" id="name-error">Equipment name is required</div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <input type="text" name="manufacturer" placeholder="Manufacturer">
+                    <div class="error-message" id="manufacturer-error">Please enter a valid manufacturer</div>
+                </div>
+                <div class="form-group">
+                    <input type="text" name="model" placeholder="Model">
+                    <div class="error-message" id="model-error">Please enter a valid model</div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <input type="text" name="serial_number" placeholder="Serial Number">
+                    <div class="error-message" id="serial_number-error">Serial number should be alphanumeric</div>
+                </div>
+                <div class="form-group">
+                    <input type="text" name="new_id_number" placeholder="New ID Number">
+                    <div class="error-message" id="new_id_number-error">ID number should be alphanumeric and unique</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <input type="text" name="location" placeholder="Location">
+                <div class="error-message" id="location-error">Please enter a valid location</div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="calibration_date">Calibration Date:</label>
+                    <input type="date" name="calibration_date" id="calibration_date">
+                    <div class="error-message" id="calibration_date-error">Invalid calibration date</div>
+                </div>
+                <div class="form-group">
+                    <label for="maintenance_date">Maintenance Date:</label>
+                    <input type="date" name="maintenance_date" id="maintenance_date">
+                    <div class="error-message" id="maintenance_date-error">Invalid maintenance date</div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="calibration_frequency">Calibration Frequency</label>
+                    <select name="calibration_frequency" id="calibration_frequency" required>
+                        <option value="">Select Frequency</option>
+                        <option value="Monthly">Monthly</option>
+                        <option value="Quarterly">Quarterly</option>
+                        <option value="Semi-Annual">Semi-Annual</option>
+                        <option value="Annual">Annual</option>
+                    </select>
+                    <div class="error-message" id="calibration_frequency-error">Please select calibration frequency</div>
+                </div>
+                <div class="form-group">
+                    <label for="maintenance_frequency">Maintenance Frequency</label>
+                    <select name="maintenance_frequency" id="maintenance_frequency" required>
+                        <option value="">Select Frequency</option>
+                        <option value="Monthly">Monthly</option>
+                        <option value="Quarterly">Quarterly</option>
+                        <option value="Semi-Annual">Semi-Annual</option>
+                        <option value="Annual">Annual</option>
+                    </select>
+                    <div class="error-message" id="maintenance_frequency-error">Please select maintenance frequency</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <input type="number" name="quantity" placeholder="Quantity" value="1" min="1">
+                <div class="error-message" id="quantity-error">Quantity must be at least 1</div>
+            </div>
+
+            <div class="form-group full-width">
+                <textarea name="description" placeholder="Equipment Description (optional)"></textarea>
+                <div class="error-message" id="description-error">Description is too long</div>
+            </div>
+
+            <button type="submit" class="submit-btn">Add Equipment</button>
+        </div>
+    </form>
+
+    <div class="success-message" id="success-message">
+        Equipment added successfully! ✓
+    </div>
+    <a href="/dashboard" class="arrow-link">Go to Dashboard</a>
+</div>
+<script src="{{ url_for('static', filename='js/addEquipment.js') }}"></script>
+{% endblock %}
