@@ -35,7 +35,7 @@ class EquipmentFormValidator {
                     clearTimeout(this.validationTimeouts[fieldName]);
                     this.validationTimeouts[fieldName] = setTimeout(() => {
                         this.validateField(fieldName);
-                    }, 500);
+                    }, 5);
                 }
             });
         });
