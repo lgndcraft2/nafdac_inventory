@@ -170,23 +170,24 @@ class EquipmentFormValidator {
         errorElement.classList.remove('show');
     }
 
-    validateForm() {
+    async validateForm() {
         let isFormValid = true;
 
-        if (!this.validateField('name')) isFormValid = false;
-        if (!this.validateField('calibration_frequency')) isFormValid = false;
-        if (!this.validateField('maintenance_frequency')) isFormValid = false;
-        if (!this.validateField('quantity')) isFormValid = false;
+        // if (!this.validateField('name')) isFormValid = false;
+        if (!await this.validateField('name')) isFormValid = false;
+        if (!await this.validateField('calibration_frequency')) isFormValid = false;
+        if (!await this.validateField('maintenance_frequency')) isFormValid = false;
+        if (!await this.validateField('quantity')) isFormValid = false;
 
-        Object.keys(this.fields).forEach(fieldName => {
+        for (const fieldName of Object.keys(this.fields)) {
             if (!['name', 'quantity', 'calibration_frequency', 'maintenance_frequency'].includes(fieldName)) {
                 if (this.fields[fieldName].value.trim()) {
-                    if (!this.validateField(fieldName)) {
+                    if (!await this.validateField(fieldName)) {
                         isFormValid = false;
                     }
                 }
             }
-        });
+        }
 
         return isFormValid;
     }
@@ -195,7 +196,7 @@ class EquipmentFormValidator {
         e.preventDefault();
         this.successMessage.classList.remove('show');
 
-        const isFormValid = this.validateForm();
+        const isFormValid = await this.validateForm();
 
         // Await uniqueness check if ID provided
         let idValid = true;
