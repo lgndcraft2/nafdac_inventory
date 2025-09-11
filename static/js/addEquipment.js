@@ -172,8 +172,7 @@ class EquipmentFormValidator {
 
     async validateForm() {
         let isFormValid = true;
-
-        // if (!this.validateField('name')) isFormValid = false;
+        
         if (!await this.validateField('name')) isFormValid = false;
         if (!await this.validateField('calibration_frequency')) isFormValid = false;
         if (!await this.validateField('maintenance_frequency')) isFormValid = false;
