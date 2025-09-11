@@ -35,7 +35,7 @@ def home():
     return render_template('index.html')
 
 @app.route('/dashboard')
-@login_required()
+@login_required
 def dashboard():
     return render_template('dashboard.html')
 
@@ -49,15 +49,15 @@ def api_register():
         data = request.json
         username = data.get('username')
         email = data.get('email')
-        password = data.get('password')
+        password_hash = data.get('password')
 
         if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
             return jsonify({"error": "Username or email already exists"}), 400
 
-        hashed_password = generate_password_hash(password)
+        hashed_password = generate_password_hash(password_hash)
         if(User.query.count() == 0):
-            new_user = User(username=username, email=email, password=hashed_password, roles='admin')
-        new_user = User(username=username, email=email, password=hashed_password)
+            new_user = User(username=username, email=email, password_hash=hashed_password, roles='admin')
+        new_user = User(username=username, email=email, password_hash=hashed_password, roles='user')
         db.session.add(new_user)
         db.session.commit()
         return jsonify({"message": "User registered successfully"}), 201
@@ -66,6 +66,24 @@ def api_register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     return render_template('login.html')
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    if request.method == 'POST':
+        data = request.json
+        username = data.get('login')
+        password = data.get('password')
+
+        if username:
+            user = User.query.filter_by(username=username).first() or User.query.filter_by(email=username).first()
+        else:
+            return jsonify({"error": "Username or email required"}), 400
+        
+        if user and check_password_hash(user.password_hash, password):
+            login_user(user)
+            return jsonify({"message": "Login successful"}), 200
+        return jsonify({"error": "Invalid username or password"}), 401
+    return jsonify({"error": "Invalid request method"}), 405
 
 @app.route('/api/equipments', methods=['GET'])
 def get_equipments():

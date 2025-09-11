@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log In</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome Back</h1>
+            <p>Sign in to your account</p>
+        </div>
+
+        <div id="errorBanner" class="error-banner">
+            <span id="errorMessage"></span>
+        </div>
+
+        <div id="successMessage" class="success-message">
+            Login successful! Redirecting...
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="login">Username or Email</label>
+                <input type="text" id="login" name="login" required autocomplete="username">
+                <div class="error-message" id="loginError"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password">
+                <div class="error-message" id="passwordError"></div>
+            </div>
+
+            <div class="form-options">
+                <label class="remember-me">
+                    <input type="checkbox" id="rememberMe" name="rememberMe">
+                    <span>Remember me</span>
+                </label>
+                <a href="/forgot-password" class="forgot-password">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <span class="btn-text">Sign In</span>
+                <div class="loading"></div>
+            </button>
+        </form>
+
+        <div class="register-link">
+            Don't have an account? <a href="/register">Create one</a>
+        </div>
+        <a href="{{request.referrer}}" class="arrow-link">Back</a>
+    </div>
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+</body>
+</html>

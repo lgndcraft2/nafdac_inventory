@@ -64,12 +64,3 @@ window.addEventListener('resize', function() {
         menuButton.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
     }
 });
-
-// Handle logout click (you can customize this)
-document.querySelector('.logout').addEventListener('click', function(e) {
-    e.preventDefault();
-    if (confirm('Are you sure you want to logout?')) {
-        // Add your logout logic here
-        alert('Logout functionality would be implemented here');
-    }
-});
