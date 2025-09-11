@@ -35,9 +35,33 @@ def home():
     return render_template('index.html')
 
 @app.route('/dashboard')
-#@login_required()
+@login_required()
 def dashboard():
     return render_template('dashboard.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    return render_template('register.html')
+
+@app.route('/api/register', methods=['POST'])
+def api_register():
+    if request.method == 'POST':
+        data = request.json
+        username = data.get('username')
+        email = data.get('email')
+        password = data.get('password')
+
+        if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
+            return jsonify({"error": "Username or email already exists"}), 400
+
+        hashed_password = generate_password_hash(password)
+        if(User.query.count() == 0):
+            new_user = User(username=username, email=email, password=hashed_password, roles='admin')
+        new_user = User(username=username, email=email, password=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({"message": "User registered successfully"}), 201
+    return jsonify({"error": "Invalid request method"}), 405
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
