@@ -72,9 +72,10 @@ def api_register():
             return jsonify({"error": "Username or email already exists"}), 400
 
         hashed_password = generate_password_hash(password_hash)
-        if(User.query.count() == 0):
+        if User.query.count() == 0:
             new_user = User(username=username, email=email, password_hash=hashed_password, roles='admin')
-        new_user = User(username=username, email=email, password_hash=hashed_password, roles='user')
+        else:
+            new_user = User(username=username, email=email, password_hash=hashed_password, roles='user')
         db.session.add(new_user)
         db.session.commit()
         return jsonify({"message": "User registered successfully"}), 201
