@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta, datetime
 from flask_mail import Mail, Message
 import os
-from .models import db, User, Equipment
+from models import db, User, Equipment
 
 
 app = Flask(__name__)
