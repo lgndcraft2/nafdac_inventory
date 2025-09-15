@@ -4,12 +4,13 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta, datetime
 from flask_mail import Mail, Message
+import os
 from .models import db, User, Equipment
 
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'findThisOutBitch'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
@@ -38,6 +39,18 @@ def home():
 @login_required
 def dashboard():
     return render_template('dashboard.html')
+
+@app.route('/api/user')
+@login_required
+def get_current_user():
+    user_data = {
+        "id": current_user.id,
+        "username": current_user.username,
+        "email": current_user.email,
+        "roles": current_user.roles,
+        "created_at": current_user.created_at.isoformat()
+    }
+    return jsonify(user_data)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -86,16 +99,20 @@ def api_login():
     return jsonify({"error": "Invalid request method"}), 405
 
 @app.route('/api/equipments', methods=['GET'])
+@login_required
 def get_equipments():
     equipments = Equipment.query.all()
     return jsonify([eq.to_dict() for eq in equipments])
 
-@app.route('/api/equipments/<int:equipment_id>', methods=['GET'])
-def get_equipment(equipment_id):
+@app.route('/equipments/<int:equipment_id>', methods=['GET'])
+@login_required
+def equipment_page(equipment_id):
     equipment = Equipment.query.get_or_404(equipment_id)
-    return jsonify(equipment.to_dict())
+    return render_template('equipment.html', equipment=equipment)
+
 
 @app.route('/api/add_equipments', methods=['POST'])
+@login_required
 def add_equipment():
     data = request.json
 
@@ -127,10 +144,17 @@ def add_equipment():
     return jsonify(new_equipment.to_dict()), 201
 
 @app.route('/addEquipment', methods=['GET', 'POST'])
+@login_required
 def add_equipment_page():
     return render_template('addEquipment.html')
 
-@app.route('/api/equipments/<int:equipment_id>', methods=['PUT'])
+@app.route('/updateEquipment/<int:equipment_id>', methods=['GET', 'POST'])
+@login_required
+def update_equipment_page(equipment_id):
+    equipment = Equipment.query.get_or_404(equipment_id)
+    return render_template('updateEquipment.html', equipment=equipment)
+
+@app.route('/api/updateEquipment/<int:equipment_id>', methods=['PUT'])
 @login_required
 def update_equipment(equipment_id):
     equipment = Equipment.query.get_or_404(equipment_id)
@@ -143,11 +167,19 @@ def update_equipment(equipment_id):
     equipment.new_id_number = data.get('new_id_number', equipment.new_id_number)
     equipment.location = data.get('location', equipment.location)
     equipment.calibration_frequency = data.get('calibration_frequency', equipment.calibration_frequency)
-    equipment.calibration_date = data.get('calibration_date', equipment.calibration_date)
     equipment.maintenance_frequency = data.get('maintenance_frequency', equipment.maintenance_frequency)
-    equipment.maintenance_date = data.get('maintenance_date', equipment.maintenance_date)
     equipment.description = data.get('description', equipment.description)
     equipment.quantity = data.get('quantity', equipment.quantity)
+
+     # ✅ Convert calibration_date if provided
+    cal_date = data.get('calibration_date')
+    if cal_date:
+        equipment.calibration_date = datetime.strptime(cal_date, "%Y-%m-%d").date()
+
+    # ✅ Convert maintenance_date if provided
+    mnt_date = data.get('maintenance_date')
+    if mnt_date:
+        equipment.maintenance_date = datetime.strptime(mnt_date, "%Y-%m-%d").date()
 
     equipment.set_next_calibration_date()
     equipment.set_next_maintenance_date()
@@ -155,7 +187,7 @@ def update_equipment(equipment_id):
     db.session.commit()
     return jsonify(equipment.to_dict())
 
-@app.route('/api/equipments/<int:equipment_id>', methods=['DELETE'])
+@app.route('/api/delete/<int:equipment_id>', methods=['DELETE'])
 @login_required
 def delete_equipment(equipment_id):
     equipment = Equipment.query.get_or_404(equipment_id)
@@ -164,16 +196,24 @@ def delete_equipment(equipment_id):
     return jsonify({"message": "Equipment deleted"}), 200
 
 @app.route('/api/check-id-uniqueness')
+@login_required
 def check_id_uniqueness():
     new_id = request.args.get('id')  # grab ?id=... from query string
+    exclude_id = request.args.get('exclude', type=int)
+
     if not new_id:
         return jsonify({"error": "Missing ID parameter"}), 400
 
-    # Check if the ID exists in the database
-    existing = Equipment.query.filter_by(new_id_number=new_id).first()
+    # Start query
+    query = Equipment.query.filter(Equipment.new_id_number == new_id)
 
-    return jsonify({"isUnique": existing is None})
+    # Exclude current equipment if updating
+    if exclude_id:
+        query = query.filter(Equipment.id != exclude_id)
 
+    exists = db.session.query(query.exists()).scalar()
+
+    return jsonify({"isUnique": not exists})
 
 @app.route('/logout')
 @login_required

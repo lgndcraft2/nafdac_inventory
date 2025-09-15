@@ -1,475 +1,141 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Equipment Card</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f7fa;
-            padding: 2rem;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
+{% extends "base.html" %}
 
-        .equipment-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e5e7eb;
-            max-width: 450px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
+{% block title %}Equipment{% endblock %}
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/equipment.css') }}">
+{% endblock %}
 
-        .equipment-card:hover {
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            transform: translateY(-2px);
-        }
+{% block content %}
 
-        .card-header {
-            padding: 1.5rem 1.5rem 1rem 1.5rem;
-            border-bottom: 1px solid #f3f4f6;
-        }
+<!-- hidden data container -->
+<div id="equipment-data"
+     data-id="{{ equipment.id }}"
+     data-mnt="{{ equipment.mnt_status }}"
+     data-mnt-date="{{ equipment.next_maintenance_date }}"
+     data-cal="{{ equipment.cal_status }}"
+     data-cal-date="{{ equipment.next_calibration_date }}">
+</div>
 
-        .equipment-name {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 0.5rem;
-            line-height: 1.3;
-        }
+<!-- Delete Modal -->
+<div id="id01" class="modal">
+  <span onclick="document.getElementById('id01').style.display='none'" class="close" title="Close Modal">&times;</span>
+  <div class="modal-content">
+    <div class="container">
+      <h1>Delete Equipment</h1>
+      <p>Are you sure you want to delete this equipment?</p>
 
-        .equipment-details {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 0.75rem;
-        }
-
-        .detail-item {
-            font-size: 0.875rem;
-            color: #6b7280;
-        }
-
-        .detail-label {
-            font-weight: 500;
-            color: #374151;
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.025em;
-        }
-
-        .status-ok {
-            background: #d1fae5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
-        }
-
-        .status-due-soon {
-            background: #fef3c7;
-            color: #92400e;
-            border: 1px solid #fcd34d;
-        }
-
-        .status-overdue {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fca5a5;
-        }
-
-        .status-unknown {
-            background: #f3f4f6;
-            color: #6b7280;
-            border: 1px solid #d1d5db;
-        }
-
-        .card-body {
-            padding: 1rem 1.5rem;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .info-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .info-label {
-            font-size: 0.75rem;
-            font-weight: 500;
-            color: #9ca3af;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.25rem;
-        }
-
-        .info-value {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #374151;
-        }
-
-        .info-value.highlight {
-            color: #1f2937;
-            font-weight: 600;
-        }
-
-        .maintenance-section {
-            background: #f9fafb;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-
-        .section-title {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .schedule-group {
-            margin-bottom: 1rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            padding: 0.75rem;
-            background: white;
-        }
-
-        .schedule-group:last-child {
-            margin-bottom: 0;
-        }
-
-        .schedule-type {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 0.5rem;
-        }
-
-        .schedule-dates {
-            display: flex;
-            justify-content: space-between;
-            gap: 1rem;
-        }
-
-        .date-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 1;
-        }
-
-        .date-label {
-            font-size: 0.75rem;
-            color: #9ca3af;
-            text-transform: uppercase;
-            font-weight: 500;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.25rem;
-        }
-
-        .date-value {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #6b7280;
-        }
-
-        .date-value.highlight {
-            color: #1f2937;
-            font-weight: 600;
-        }
-
-        .date-value.overdue {
-            color: #dc2626;
-            font-weight: 600;
-        }
-
-        .date-value.due-soon {
-            color: #d97706;
-            font-weight: 600;
-        }
-
-        .date-value.ok {
-            color: #059669;
-            font-weight: 600;
-        }
-
-        .description {
-            margin-top: 1rem;
-            font-size: 0.875rem;
-            color: #6b7280;
-            line-height: 1.5;
-            font-style: italic;
-        }
-
-        .quantity-badge {
-            background: #eff6ff;
-            color: #1e40af;
-            border: 1px solid #bfdbfe;
-            padding: 0.25rem 0.5rem;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .arrow-link {
-            display: inline-block;
-            margin-top: 16px;
-            color: #667eea;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .arrow-link::after {
-            content: "→";
-            font-size: 1.1em;
-            transition: transform 0.3s ease;
-        }
-
-        .arrow-link:hover {
-            transform: translateY(-2px);
-        }
-
-        .arrow-link:hover::after {
-            transform: translateX(6px);
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .equipment-details {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-
-            .schedule-dates {
-                flex-direction: column;
-                gap: 0.75rem;
-            }
-
-            .date-item {
-                align-items: flex-start;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="equipment-card">
-        <div class="card-header">
-            <div class="equipment-name">Precision Scale Model X200</div>
-            <div class="equipment-details">
-                <div class="detail-item">
-                    <span class="detail-label">ID:</span> EQP-001
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Serial:</span> PSX-2024-0156
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Qty:</span> 
-                    <span class="quantity-badge">2 units</span>
-                </div>
-            </div>
-            <div class="status-badge status-due-soon">Due Soon</div>
-        </div>
-
-        <div class="card-body">
-            <div class="info-grid">
-                <div class="info-item">
-                    <div class="info-label">Manufacturer</div>
-                    <div class="info-value">Acme Instruments</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Model</div>
-                    <div class="info-value">X200-Pro</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Location</div>
-                    <div class="info-value highlight">Lab Room 3A</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Status</div>
-                    <div class="info-value highlight">Due Soon</div>
-                </div>
-            </div>
-
-            <div class="maintenance-section">
-                <div class="section-title">
-                    🔧 Maintenance Schedule
-                </div>
-                <div class="schedule-group">
-                    <div class="schedule-type">Calibration (Quarterly)</div>
-                    <div class="schedule-dates">
-                        <div class="date-item">
-                            <span class="date-label">Last:</span>
-                            <span class="date-value">2024-12-15</span>
-                        </div>
-                        <div class="date-item">
-                            <span class="date-label">Next:</span>
-                            <span class="date-value highlight due-soon">2025-03-15</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="schedule-group">
-                    <div class="schedule-type">Maintenance (Annual)</div>
-                    <div class="schedule-dates">
-                        <div class="date-item">
-                            <span class="date-label">Last:</span>
-                            <span class="date-value">2024-06-10</span>
-                        </div>
-                        <div class="date-item">
-                            <span class="date-label">Next:</span>
-                            <span class="date-value highlight ok">2025-06-10</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="description">
-                High-precision analytical scale for laboratory measurements. Requires regular calibration to maintain accuracy standards.
-            </div>
-        </div>
-        <a href="{{request.referrer}}" class="arrow-link">Back</a>
+      <div class="clearfix">
+        <button type="button" class="cancelbtn">Cancel</button>
+        <button type="button" class="deletebtn" data-id="{{ equipment.id }}" onclick="deleteRow(this.dataset.id)">Delete</button>
+      </div>
     </div>
+  </div>
+</div>
 
-    <script>
-        function createEquipmentCard(equipment) {
-            const card = document.querySelector('.equipment-card');
-            
-            // Update header
-            card.querySelector('.equipment-name').textContent = equipment.name;
-            
-            // Update details
-            const details = card.querySelectorAll('.detail-item');
-            details[0].innerHTML = `<span class="detail-label">ID:</span> ${equipment.new_id_number}`;
-            details[1].innerHTML = `<span class="detail-label">Serial:</span> ${equipment.serial_number}`;
-            details[2].innerHTML = `<span class="detail-label">Qty:</span> <span class="quantity-badge">${equipment.quantity} unit${equipment.quantity > 1 ? 's' : ''}</span>`;
-            
-            // Update status badge
-            const statusBadge = card.querySelector('.status-badge');
-            statusBadge.textContent = equipment.status;
-            statusBadge.className = 'status-badge';
-            
-            const statusClass = equipment.status.toLowerCase().replace(/\s+/g, '-');
-            switch (statusClass) {
-                case 'ok': statusBadge.classList.add('status-ok'); break;
-                case 'due-soon': statusBadge.classList.add('status-due-soon'); break;
-                case 'over-due': statusBadge.classList.add('status-overdue'); break;
-                default: statusBadge.classList.add('status-unknown'); break;
-            }
-            
-            // Update info grid
-            const infoValues = card.querySelectorAll('.info-value');
-            infoValues[0].textContent = equipment.manufacturer;
-            infoValues[1].textContent = equipment.model;
-            infoValues[2].textContent = equipment.location;
-            infoValues[3].textContent = equipment.status;
-            
-            // Update schedule groups
-            const scheduleGroups = card.querySelectorAll('.schedule-group');
-            
-            // Calibration
-            const calibrationGroup = scheduleGroups[0];
-            calibrationGroup.querySelector('.schedule-type').textContent = `Calibration (${equipment.calibration_frequency || 'Not set'})`;
-            const calibrationDates = calibrationGroup.querySelectorAll('.date-value');
-            calibrationDates[0].textContent = equipment.calibration_date || 'Not recorded';
-            calibrationDates[1].textContent = equipment.next_calibration_date || 'Not scheduled';
-            
-            // Maintenance  
-            const maintenanceGroup = scheduleGroups[1];
-            maintenanceGroup.querySelector('.schedule-type').textContent = `Maintenance (${equipment.maintenance_frequency || 'Not set'})`;
-            const maintenanceDates = maintenanceGroup.querySelectorAll('.date-value');
-            maintenanceDates[0].textContent = equipment.maintenance_date || 'Not recorded';
-            maintenanceDates[1].textContent = equipment.next_maintenance_date || 'Not scheduled';
-            
-            // Update date status colors
-            updateDateStatus(calibrationDates[1], equipment.next_calibration_date);
-            updateDateStatus(maintenanceDates[1], equipment.next_maintenance_date);
-            
-            // Update description
-            card.querySelector('.description').textContent = equipment.description || 'No description available';
-        }
+<!-- Equipment Card -->
+<div class="equipment-card">
 
-        function updateDateStatus(element, dateString) {
-            if (!dateString || dateString === 'Not scheduled') return;
+    <!-- Header -->
+    <header class="card-header">
+        <div>
+            <h1 class="equipment-name">{{ equipment.name }}</h1>
+            <div class="equipment-meta">
+                <span>ID: EQP-{{ equipment.id }}</span>
+                <span>Serial: {{ equipment.serial_number }}</span>
+                <span>Qty: <span class="quantity-value">{{ equipment.quantity }} units</span></span>
+            </div>
+        </div>
+        <!-- Calibration status badge -->
+        <div id="cal_status_badge"></div>
+    </header>
 
-            const today = new Date();
-            const targetDate = new Date(dateString);
-            const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
-
-            element.classList.remove('overdue', 'due-soon', 'ok');
+    <!-- Body -->
+    <main class="card-body">
+        <div class="details-grid">
             
-            if (diffDays < 0) {
-                element.classList.add('overdue');
-            } else if (diffDays <= 30) {
-                element.classList.add('due-soon');
-            } else {
-                element.classList.add('ok');
-            }
-        }
+            <!-- Info -->
+            <div class="info-column">
+                <div class="info-item">
+                    <span class="info-label">Manufacturer</span>
+                    <p class="info-value">{{ equipment.manufacturer }}</p>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Model</span>
+                    <p class="info-value">{{ equipment.model }}</p>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Location</span>
+                    <p class="info-value highlight">{{ equipment.location }}</p>
+                </div>
+            </div>
 
-        // Sample equipment data
-        const sampleEquipment = {
-            id: 1,
-            name: "Precision Scale Model X200",
-            manufacturer: "Acme Instruments",
-            model: "X200-Pro",
-            serial_number: "PSX-2024-0156",
-            new_id_number: "EQP-001",
-            location: "Lab Room 3A",
-            calibration_frequency: "Quarterly",
-            calibration_date: "2024-12-15",
-            next_calibration_date: "2025-03-15",
-            maintenance_frequency: "Annual",
-            maintenance_date: "2024-06-10",
-            next_maintenance_date: "2025-06-10",
-            description: "High-precision analytical scale for laboratory measurements. Requires regular calibration to maintain accuracy standards.",
-            quantity: 2,
-            status: "Due Soon"
-        };
+            <!-- Maintenance / Calibration -->
+            <div class="maintenance-column">
+                <h2 class="section-title">Maintenance Schedule</h2>
+                
+                <!-- Calibration -->
+                <div class="info-item">
+                    <span class="info-label">Calibration ({{ equipment.calibration_frequency }})</span>
+                    <p class="cal-info-value">
+                        Next: <span class="date-value highlight" id="cal_status_display">{{ equipment.next_calibration_date }}</span>
+                    </p>
+                    <p class="info-meta">Last: {{ equipment.calibration_date }}</p>
+                </div>
 
-        // Initialize the card
-        createEquipmentCard(sampleEquipment);
+                <!-- Maintenance -->
+                <div class="info-item">
+                    <span class="info-label">Maintenance ({{ equipment.maintenance_frequency }})</span>
+                    <p class="mnt-info-value">
+                        Next: <span class="date-value highlight" id="mnt_status_display">{{ equipment.next_maintenance_date }}</span>
+                    </p>
+                    <p class="info-meta">Last: {{ equipment.maintenance_date }}</p>
+                </div>
+            </div>
+        </div>
 
-        // Function to update card with new data
-        function loadEquipment(equipmentData) {
-            createEquipmentCard(equipmentData);
-        }
-    </script>
-</body>
-</html>
+        <!-- Action Buttons -->
+        <div class="buttons">
+            <button class="action-button action-delete" onclick="openModal()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                <span>Delete</span>
+            </button>
+
+            <button class="action-button action-edit" onclick="window.location.href='/updateEquipment/{{ equipment.id }}'">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 
+                             0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                <span>Edit</span>
+            </button>
+
+            <button class="action-button action-calibrated" onclick="alert('Calibration marked as completed!')">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Calibrated</span>
+            </button>
+
+            <button class="action-button action-maintained" onclick="alert('Maintenance marked as completed!')">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M9 12l2 2l4-4m6 2a9 9 0 11-18 0a9 9 0 0118 0z"></path>
+                </svg>
+                <span>Maintained</span>
+            </button>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="card-footer">
+        <a href="{{ request.referrer or url_for('home') }}" class="back-link">← Go Back</a>
+    </footer>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/equipment.js') }}"></script>
+{% endblock %}

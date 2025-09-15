@@ -1,205 +1,257 @@
-*{
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-body {
-    background-color: #f9fafb;
-    color: #374151;
-}   
-
+/* ===== THEME VARIABLES ===== */
 :root {
-    /* Color variables from previous code */
-    --primary-color: #2563eb;
-    --secondary-color: #1e40af;
-    --text-color: #1f2937;
-    --text-light: #6b7280;
-    --background-color: #ffffff;
-    --border-color: #e5e7eb;
-    --hover-bg: #f3f4f6;
-    --dropdown-bg: #ffffff;
-    --dropdown-shadow: rgba(0, 0, 0, 0.1);
-    --success-color: #10b981;
-    --warning-color: #f59e0b;
-    --danger-color: #ef4444;
+  --font-family: Arial, sans-serif;
+  --color-text: #2c3e50;
+  --color-subtext: #555;
+  --color-muted: #777;
+  --color-border: #ddd;
+  --color-bg-light: #f9f9f9;
+  --color-bg-header: #f4f6f8;
+  --color-primary: #3498db;
+  --color-success: #27ae60;
+  --color-warning: #f39c12;
+  --color-danger: #e74c3c;
+  --radius: 12px;
+  --shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
-.table-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    background-color: var(--background-color);
-    border-radius: 0.75rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
+/* ===== GLOBAL ===== */
+body {
+  font-family: var(--font-family);
+  background: #fafafa;
+  color: var(--color-text);
 }
 
-.table-header {
-    padding: 1.5rem 2rem;
-    border-bottom: 1px solid var(--border-color);
+/* Utility */
+.highlight {
+  font-weight: bold;
+  color: var(--color-text);
+}
+.due-soon { color: var(--color-danger); }
+.ok { color: var(--color-success); }
+
+/* Badges */
+.cal_status-badge {
+  padding: 0.35rem 0.8rem;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  font-weight: 600;
+  color: #fff;
 }
 
-.table-header h2 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--text-color);
-    margin-bottom: 0.5rem;
+.quantity-badge {
+  background: var(--color-primary);
+  color: #fff;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: .85rem;
 }
 
-.table-header p {
-    color: var(--text-light);
-    font-size: 1rem;
+/* Links */
+.arrow-link,
+.open-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: .95rem;
 }
-
-.table-wrapper {
-    overflow-x: auto;
-}
-
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 1rem;
-}
-
-.data-table th {
-    background-color: var(--hover-bg);
-    padding: 1rem 1.5rem;
-    text-align: left;
-    font-weight: 600;
-    color: var(--text-color);
-    border-bottom: 1px solid var(--border-color);
-    white-space: nowrap;
-}
-
-.data-table td {
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-    vertical-align: middle;
-}
-
-.data-table tbody tr {
-    transition: background-color 0.2s ease;
-}
-
-.data-table tbody tr:hover {
-    background-color: var(--hover-bg);
-}
-
-.data-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-/* Serial Number Column */
-.sn-column {
-    width: 80px;
-    text-align: center;
-    font-weight: 600;
-    color: var(--text-light);
-}
-
-/* Name Column */
-.name-column {
-    font-weight: 600;
-    color: var(--text-color);
-}
-
-/* Location Column */
-.location-column {
-    color: var(--text-light);
-}
-
-/* Date Column */
-.date-column {
-    font-family: 'Courier New', monospace;
-    font-size: 0.8rem;
-}
-
-/* Status Column */
-.status-column {
-    width: 120px;
-}
-
-.status-badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-}
-
-.status-active {
-    background-color: rgba(16, 185, 129, 0.1);
-    color: var(--success-color);
-}
-
-.status-warning {
-    background-color: rgba(245, 158, 11, 0.1);
-    color: var(--warning-color);
-}
-
-.status-expired {
-    background-color: rgba(239, 68, 68, 0.1);
-    color: var(--danger-color);
-}
-
-/* Action Column */
-.action-column {
-    width: 100px;
+.arrow-link:hover,
+.open-link:hover {
+  text-decoration: underline;
 }
 
 .action-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.5rem 1rem;
-    background-color: var(--primary-color);
-    color: white;
-    text-decoration: none;
-    border-radius: 0.375rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    border: none;
-    cursor: pointer;
-}
-
-.action-button:hover {
-    background-color: var(--secondary-color);
-    transform: translateY(-1px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: .9rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
 }
 
 .action-button svg {
-    width: 1rem;
-    height: 1rem;
+  width: 18px;
+  height: 18px;
 }
 
-.action-button.success {
-    background-color: var(--success-color);
+.action-button:hover {
+  background: #2a80b9; /* darker primary */
 }
 
-.action-button.warning {
-    background-color: var(--warning-color);
+.action-button:active {
+  transform: scale(0.96);
 }
 
-.action-button.danger {
-    background-color: var(--danger-color);
+.action-button span {
+  line-height: 1;
 }
 
-.action-button.success:hover {
-    background-color: #059669;
+.cal_status-active {
+  background-color: #22c55e; /* Green */
 }
 
-.action-button.warning:hover {
-    background-color: #d97706;
+.cal_status-warning {
+  background-color: #f59e0b; /* Orange */
 }
 
-.action-button.danger:hover {
-    background-color: #dc2626;
+.cal_status-expired {
+  background-color: #e51818; /* Red */
 }
 
-/* Empty state */
+/* ===== EQUIPMENT CARD ===== */
+.equipment-card {
+  max-width: 850px;
+  margin: 2rem auto;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.card-header { margin-bottom: 1.5rem; }
+
+.title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: .75rem;
+}
+
+.equipment-name {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.equipment-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: .95rem;
+  color: var(--color-subtext);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.info-label {
+  font-size: .85rem;
+  color: var(--color-muted);
+}
+.info-value { font-weight: 500; }
+
+.maintenance-section { margin-bottom: 1.5rem; }
+.section-title {
+  font-size: 1.1rem;
+  margin-bottom: .5rem;
+  font-weight: 600;
+}
+.schedule-group {
+  background: var(--color-bg-light);
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: .75rem 1rem;
+  margin-bottom: .75rem;
+}
+.schedule-type {
+  font-weight: 600;
+  margin-bottom: .35rem;
+}
+.schedule-dates {
+  display: flex;
+  justify-content: space-between;
+  font-size: .9rem;
+  color: var(--color-subtext);
+}
+.date-label {
+  font-weight: 500;
+  margin-right: .25rem;
+}
+
+.description {
+  font-size: .95rem;
+  line-height: 1.4;
+  color: var(--color-subtext);
+}
+
+/* ===== CALIBRATION TABLE ===== */
+.table-container {
+  max-width: 1000px;
+  margin: 2rem auto;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.table-header {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+.table-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+.table-header p {
+  margin: 0.25rem 0 0;
+  color: var(--color-muted);
+  font-size: .95rem;
+}
+
+.table-wrapper { overflow-x: auto; }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .95rem;
+}
+.data-table thead { background: var(--color-bg-header); }
+.data-table th,
+.data-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+.data-table th {
+  font-weight: 600;
+  color: var(--color-text);
+}
+.data-table tbody tr:hover { background: #fafafa; }
+
+.sn-column { width: 60px; text-align: center; }
+.cal_status-column { width: 150px; text-align: center; }
+.action-column { width: 100px; text-align: center; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 700px) {
+  .equipment-card,
+  .table-container {
+    padding: 1rem;
+  }
+  .equipment-name,
+  .table-header h2 {
+    font-size: 1.25rem;
+  }
+  .data-table th,
+  .data-table td {
+    padding: 0.6rem;
+    font-size: 0.85rem;
+  }
+}
+
 .empty-state {
     text-align: center;
     padding: 3rem 2rem;
@@ -217,84 +269,4 @@ body {
     font-size: 1.125rem;
     margin-bottom: 0.5rem;
     color: var(--text-color);
-}
-
-/* Tablet Styles */
-@media (max-width: 1024px) {
-    .table-header {
-        padding: 1.25rem 1.5rem;
-    }
-
-    .data-table th,
-    .data-table td {
-        padding: 0.875rem 1rem;
-    }
-}
-
-/* Mobile Styles */
-@media (max-width: 768px) {
-    .table-header {
-        padding: 1rem 1.5rem;
-    }
-
-    .table-header h2 {
-        font-size: 1.25rem;
-    }
-
-    .data-table {
-        font-size: 0.75rem;
-    }
-
-    .data-table th,
-    .data-table td {
-        padding: 0.75rem 0.5rem;
-    }
-
-    .action-button {
-        padding: 0.375rem 0.5rem;
-        font-size: 0.7rem;
-    }
-
-    .action-button span {
-        display: none;
-    }
-
-    .status-badge {
-        font-size: 0.7rem;
-        padding: 0.2rem 0.5rem;
-    }
-}
-
-/* Small Mobile Styles */
-@media (max-width: 480px) {
-    body {
-        padding: 0.75rem;
-    }
-
-    .table-header {
-        padding: 1rem;
-    }
-
-    .table-header h2 {
-        font-size: 1.125rem;
-    }
-
-    .data-table th,
-    .data-table td {
-        padding: 0.5rem 0.25rem;
-    }
-
-    .data-table {
-        font-size: 0.7rem;
-    }
-
-    .action-button {
-        padding: 0.25rem 0.375rem;
-        font-size: 0.65rem;
-    }
-
-    .status-badge {
-        font-size: 0.65rem;
-        padding: 0.15rem 0.4rem;
-    }
 }

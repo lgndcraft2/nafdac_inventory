@@ -1,0 +1,336 @@
+/* static/css/equipment.css */
+:root {
+  --color-primary: #3498db;   /* Blue */
+  --color-success: #2ecc71;   /* Green */
+  --color-warning: #f39c12;   /* Orange */
+  --color-danger: #e74c3c;    /* Red */
+}
+
+.equipment-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* --- Header --- */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.equipment-name {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: #111;
+}
+
+.equipment-meta {
+    display: flex;
+    gap: 1rem;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.quantity-value {
+    background-color: #f0f0f0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    color: #333;
+}
+
+.cal_status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #fff;
+    white-space: nowrap;
+    margin-left: 1rem;
+}
+.cal_status-badge.cal_status-warning { background-color: #f59e0b; }
+.cal_status-badge.cal_status-active { background-color: #22c55e; }
+.cal_status-badge.cal_status-expired { background-color: #ef4444; }
+
+/* --- Card Body --- */
+.card-body {
+    padding: 1.5rem;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    color: #333;
+}
+
+.info-item {
+    margin-bottom: 1.5rem;
+}
+
+.info-label {
+    display: block;
+    font-size: 0.9rem;
+    color: #777;
+    margin-bottom: 0.25rem;
+}
+
+.info-value {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #222;
+    margin: 0;
+}
+.info-value.highlight {
+    color: #0056b3;
+    font-weight: 600;
+}
+
+.info-meta {
+    font-size: 0.85rem;
+    color: #888;
+    margin: 0.25rem 0 0 0;
+}
+
+.date-value.highlight {
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: white;
+}
+.date-value.ok { background-color: #22c55e; }
+.date-value.due-soon { background-color: #f59e0b; }
+
+/* --- Description & Footer --- */
+.description {
+    margin-top: 1rem;
+    color: #555;
+    line-height: 1.6;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 1.5rem;
+}
+
+/* ===== BASE ACTION BUTTON ===== */
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: .9rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  color: #fff;
+}
+
+.action-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.action-button:active {
+  transform: scale(0.96);
+}
+
+/* ===== VARIANTS ===== */
+.action-delete {
+  background: var(--color-danger);
+}
+.action-delete:hover {
+  background: #c0392b;
+}
+
+.action-edit {
+  background: var(--color-warning);
+  color: #fff;
+}
+.action-edit:hover {
+  background: #d68910;
+}
+
+.action-calibrated {
+  background: var(--color-primary);
+}
+.action-calibrated:hover {
+  background: #2a80b9;
+}
+
+.action-maintained {
+  background: var(--color-success);
+}
+.action-maintained:hover {
+  background: #1e8449;
+}
+
+
+.card-footer {
+    padding: 1rem 1.5rem;
+    background-color: #f9f9f9;
+    text-align: right;
+    border-top: 1px solid #e0e0e0;
+}
+
+.back-link {
+    color: #0056b3;
+    text-decoration: none;
+    font-weight: 500;
+}
+.back-link:hover {
+    text-decoration: underline;
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 768px) {
+    .details-grid {
+        grid-template-columns: 1fr; /* Stack columns */
+        gap: 0;
+    }
+    
+    .maintenance-column {
+        border-top: 1px solid #e0e0e0;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .card-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .cal_status-badge {
+        margin-left: 0;
+    }
+}
+
+button {
+  background-color: #04AA6D;
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  opacity: 0.9;
+}
+
+button:hover {
+  opacity:1;
+}
+
+/* Float cancel and delete buttons and add an equal width */
+.cancelbtn, .deletebtn {
+  float: left;
+  width: 50%;
+}
+
+/* Add a color to the cancel button */
+.cancelbtn {
+  background-color: #ccc;
+  color: black;
+}
+
+/* Add a color to the delete button */
+.deletebtn {
+  background-color: #f44336;
+}
+
+/* Add padding and center-align text to the container */
+.container {
+  padding: 16px;
+  text-align: center;
+}
+
+/* The Modal (background) */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: #474e5d;
+  padding-top: 50px;
+}
+
+/* Modal Content/Box */
+.modal-content {
+  background-color: #fefefe;
+  margin: 5% auto 15% auto; /* 5% from the top, 15% from the bottom and centered */
+  border: 1px solid #888;
+  width: 80%; /* Could be more or less, depending on screen size */
+}
+
+/* Style the horizontal ruler */
+hr {
+  border: 1px solid #f1f1f1;
+  margin-bottom: 25px;
+}
+
+/* The Modal Close Button (x) */
+.close {
+  position: absolute;
+  right: 35px;
+  top: 15px;
+  font-size: 40px;
+  font-weight: bold;
+  color: #f1f1f1;
+}
+
+.close:hover,
+.close:focus {
+  color: #f44336;
+  cursor: pointer;
+}
+
+/* Clear floats */
+.clearfix::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+/* Change styles for cancel button and delete button on extra small screens */
+@media screen and (max-width: 300px) {
+  .cancelbtn, .deletebtn {
+    width: 100%;
+  }
+}
+
+/* Shared badge styles */
+.mnt_status-badge,
+.cal_status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: white;
+    margin-left: -2px;
+}
+
+/* Calibration status colors */
+.cal_status-active { background-color: #28a745; }   /* Green */
+.cal_status-warning { background-color: #ffc107; }  /* Yellow */
+.cal_status-expired { background-color: #e9071e; }  /* Red */
+.cal_status-unknown { background-color: #6c757d; }  /* Gray */
+
+/* Maintenance status colors */
+.mnt_status-active { background-color: #28a745; }   /* Green */
+.mnt_status-warning { background-color: #ffc107; }  /* Yellow */
+.mnt_status-expired { background-color: #f0051d; }  /* Red */
+.mnt_status-unknown { background-color: #6c757d; }  /* Gray */

@@ -6,7 +6,7 @@ function createTableRow(item, index) {
             <td class="name-column">${item.name}</td>
             <td class="location-column">${item.location}</td>
             <td class="date-column">${formatDate(item.next_calibration_date)}</td>
-            <td class="status-column">${getStatusBadge(item.status)}</td>
+            <td class="cal_status-column">${getcal_statusBadge(item.cal_status)}</td>
             <td class="action-column">
                 <button class="action-button" onclick="openDetails(${item.id})">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -19,15 +19,19 @@ function createTableRow(item, index) {
     `;
 }
 
-function getStatusBadge(status) {
-    const statusMap = {
-        'OK': { class: 'status-active', text: 'OK' },
-        'Due Soon': { class: 'status-warning', text: 'Due Soon' },
-        'Over Due': { class: 'status-expired', text: 'Over Due' },
-        'Unknown': { class: 'status-unknown', text: 'Unknown' }
+function openDetails(equipmentId) {
+    window.location.href = `/equipments/${equipmentId}`;
+}
+
+function getcal_statusBadge(cal_status) {
+    const cal_statusMap = {
+        'OK': { class: 'cal_status-active', text: 'OK' },
+        'Due Soon': { class: 'cal_status-warning', text: 'Due Soon' },
+        'Over Due': { class: 'cal_status-expired', text: 'Over Due' },
+        'Unknown': { class: 'cal_status-unknown', text: 'Unknown' }
     };
-    const statusInfo = statusMap[status] || statusMap['Unknown'];
-    return `<span class="status-badge ${statusInfo.class}">${statusInfo.text}</span>`;
+    const cal_statusInfo = cal_statusMap[cal_status] || cal_statusMap['Unknown'];
+    return `<span class="cal_status-badge ${cal_statusInfo.class}">${cal_statusInfo.text}</span>`;
 }
 
 function formatDate(dateString) {

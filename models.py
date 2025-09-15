@@ -42,7 +42,6 @@ class Equipment(db.Model):
 
     description = db.Column(db.String(500))
     quantity = db.Column(db.Integer, default=1)
-    # status = db.Column(db.String(100), default='OK')  # e.g., 'OK', 'Due Soon', 'Over Due'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def set_next_calibration_date(self):
@@ -70,12 +69,25 @@ class Equipment(db.Model):
             self.next_maintenance_date = None
 
     @property
-    def status(self):
+    def cal_status(self):
         if not self.next_calibration_date:
-            return 'Unknown'
+            return 'Unknown C'
 
         today = datetime.utcnow().date()
         days_left = (self.next_calibration_date - today).days
+        if days_left < 0:
+            return 'Over Due'
+        elif days_left <= 30:
+            return 'Due Soon'
+        else:
+            return 'OK'
+
+    @property
+    def mnt_status(self):
+        if not self.next_maintenance_date:
+            return 'Unknown M'
+        today = datetime.utcnow().date()
+        days_left = (self.next_maintenance_date - today).days
         if days_left < 0:
             return 'Over Due'
         elif days_left <= 30:
@@ -101,7 +113,8 @@ class Equipment(db.Model):
             "description": self.description,
             "quantity": self.quantity,
             "created_at": self.created_at.isoformat(),
-            "status": self.status
+            "cal_status": self.cal_status,
+            "mnt_status": self.mnt_status
         }
     
     def __repr__(self):

@@ -12,8 +12,8 @@
     <div class="navbar-container">
         <!-- Logo -->
         <a href="#" class="logo">
-            <div class="logo-icon">B</div>
-            Brand
+            <div class="logo-icon">IT</div>
+            INVENTORY TRACKER
         </a>
 
         <!-- Navigation Links -->
@@ -33,8 +33,8 @@
         <!-- User Profile Dropdown -->
         <div class="user-profile">
             <button class="profile-button" onclick="toggleDropdown()">
-                <div class="profile-avatar">JD</div>
-                <span>John Doe</span>
+                <div class="profile-avatar">HI</div>
+                <span id="username">John Doe</span>
                 <svg class="dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
@@ -51,8 +51,8 @@
     <!-- Mobile Navigation -->
     <div class="mobile-nav" id="mobileNav">
         <ul class="mobile-nav-links">
-            <li><a href="#" class="active">Home</a></li>
-            <li><a href="#">Projects</a></li>
+            <li><a href="/dashboard" class="active">Dashboard</a></li>
+            <li><a href="/addEquipment">Add Equipment</a></li>
             <li><a href="#">Contact</a></li>
         </ul>
     </div>
@@ -117,5 +117,15 @@
 </footer>
 
 <script src="{{ url_for('static', filename='js/base.js') }}"></script>
+<script>
+    fetch('/api/user')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('username').textContent = data.username;
+            const initials = data.username.split(' ').map(name => name.charAt(0)).join('').toUpperCase();
+            document.querySelector('.profile-avatar').textContent = initials;
+        })
+        .catch(error => console.error('Error fetching user data:', error));
+</script>
 </body>
 </html>
