@@ -5,8 +5,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta, datetime
 from flask_mail import Mail, Message
 import os
+from apscheduler.schedulers.background import BackgroundScheduler
+from dotenv import load_dotenv
+import atexit
 from models import db, User, Equipment
 
+load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'findThisOutBitch'
@@ -16,6 +20,15 @@ if uri.startswith("postgres://"):
 
 app.config["SQLALCHEMY_DATABASE_URI"] = uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')  # your email
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')  # app password
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_USE_SSL'] = True
+
 
 db.init_app(app)
 
@@ -102,6 +115,53 @@ def api_login():
             return jsonify({"message": "Login successful"}), 200
         return jsonify({"error": "Invalid username or password"}), 401
     return jsonify({"error": "Invalid request method"}), 405
+
+@app.route('/admin')
+@login_required
+def admin_page():
+    if 'admin' not in current_user.roles:
+        return "Access denied", 403
+    return render_template('adminPage.html')
+
+@app.route('/api/admin/users', methods=['GET'])
+@login_required
+def get_users():
+    users = User.query.all()
+    return jsonify([{
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "roles": user.roles,
+        "created_at": user.created_at.isoformat()
+    } for user in users])
+
+@app.route('/api/admin/adminify/<int:user_id>', methods=['PUT'])
+@login_required
+def adminify_user(user_id):
+    if 'admin' not in current_user.roles:
+        return jsonify({"error": "Access denied"}), 403
+
+    user = User.query.get_or_404(user_id)
+    if user.roles == 'admin':
+        return jsonify({"error": "User is already an admin"}), 400
+
+    user.roles = 'admin'
+    db.session.commit()
+    return jsonify({"message": "User promoted to admin"}), 200
+
+@app.route('/api/admin/delete_user/<int:user_id>', methods=['DELETE'])
+@login_required
+def delete_user(user_id):
+    if 'admin' not in current_user.roles:
+        return jsonify({"error": "Access denied"}), 403
+
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id or user.roles == 'admin':
+        return jsonify({"error": "You cannot delete your own account"}), 400
+
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({"message": "User deleted"}), 200
 
 @app.route('/api/equipments', methods=['GET'])
 @login_required
@@ -220,6 +280,24 @@ def check_id_uniqueness():
 
     return jsonify({"isUnique": not exists})
 
+@app.route('/test-route', methods=['GET'])
+def tests():
+    user = User.query.first()
+    if not user:
+        return "❌ No user found in DB"
+
+    msg = Message(
+        subject="Test Email",
+        recipients=[user.email],
+        body="If you see this, mail works."
+    )
+    try:
+        mail.send(msg)
+        return "✅ Test mail sent!"
+    except Exception as e:
+        print("❌ Mail error:", e)
+        return f"Error: {e}"
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -229,5 +307,42 @@ def logout():
 with app.app_context():
     db.create_all()
 
+def send_due_maintenance_notifications():
+    with app.app_context():
+        today = datetime.utcnow().date()
+        upcoming_date = today + timedelta(days=30)
+
+        due_equipments = Equipment.query.filter(
+            Equipment.next_maintenance_date != None,
+            Equipment.next_maintenance_date <= upcoming_date
+        ).all()
+
+        if due_equipments:
+            user = User.query.first()
+            if not user:
+                print("❌ No user found for sending notifications.")
+                return
+
+            equipment_list = "\n".join(
+                [f"- {eq.name} (Next Maintenance: {eq.next_maintenance_date})" for eq in due_equipments]
+            )
+
+            msg = Message(
+                subject="Upcoming Equipment Maintenance Notification",
+                recipients=[user.email],
+                body=f"The following equipment are due for maintenance within the next 30 days:\n\n{equipment_list}"
+            )
+            try:
+                mail.send(msg)
+                print("✅ Maintenance notification sent.")
+            except Exception as e:
+                print("❌ Failed to send maintenance notification:", e)
+        else:
+            print("No equipment due for maintenance in the next 30 days.")
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=send_due_maintenance_notifications, trigger="interval", seconds=10, max_instances=3, coalesce=True)  # ✅ shortened
+    scheduler.start()
+    atexit.register(lambda: scheduler.shutdown(wait=False))
+    app.run(debug=True, use_reloader=False)

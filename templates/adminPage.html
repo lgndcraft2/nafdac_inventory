@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Page{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/adminPage.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Admin Dashboard</h1>
+        <p>Manage users and monitor system activity</p>
+    </div>
+
+    <div class="stats-container">
+        <div class="stat-box">
+            <div class="icon">👤</div>
+            <div class="number" id="normal-users-count">0</div>
+            <div class="label">Normal Users</div>
+        </div>
+        <div class="stat-box">
+            <div class="icon">✏️</div>
+            <div class="number" id="editors-count">0</div>
+            <div class="label">Editors</div>
+        </div>
+        <div class="stat-box">
+            <div class="icon">⚡</div>
+            <div class="number" id="admins-count">0</div>
+            <div class="label">Admins</div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <div class="table-header">
+            <h2>User Management</h2>
+            <div class="search-container">
+                <input type="text" class="search-input" id="search-input" placeholder="Search users...">
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table id="users-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="users-tbody">
+                    <!-- Users will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/adminPage.js') }}"></script>
+{% endblock %}
