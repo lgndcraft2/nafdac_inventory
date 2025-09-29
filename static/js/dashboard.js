@@ -1,3 +1,6 @@
+// Global variable to store all equipment data
+let allEquipmentData = [];
+
 // Create table row
 function createTableRow(item, index) {
     return `
@@ -42,7 +45,6 @@ function formatDate(dateString) {
     });
 }
 
-
 // Empty state HTML
 function createEmptyState() {
     return `
@@ -51,9 +53,94 @@ function createEmptyState() {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
             </svg>
             <h3>No Equipment Found</h3>
-            <p>Click "Add Row" to add new equipment to the table.</p>
+            <p>Try adjusting your search or filter criteria.</p>
         </div>
     `;
+}
+
+// Filter and search function
+function filterAndSearchEquipment() {
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    const statusFilter = document.getElementById('status-filter').value;
+    const locationFilter = document.getElementById('location-filter').value;
+
+    let filteredData = allEquipmentData;
+
+    // Apply search filter
+    if (searchTerm) {
+        filteredData = filteredData.filter(item => 
+            item.name.toLowerCase().includes(searchTerm) ||
+            item.location.toLowerCase().includes(searchTerm) ||
+            item.serial_number.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    // Apply status filter
+    if (statusFilter && statusFilter !== 'all') {
+        filteredData = filteredData.filter(item => item.cal_status === statusFilter);
+    }
+
+    // Apply location filter
+    if (locationFilter && locationFilter !== 'all') {
+        filteredData = filteredData.filter(item => item.location === locationFilter);
+    }
+
+    // Update the table with filtered data
+    updateTable(filteredData);
+    
+    // Update results count
+    updateResultsCount(filteredData.length, allEquipmentData.length);
+}
+
+// Update table with filtered data
+function updateTable(data) {
+    const tableBody = document.getElementById('table-body');
+    
+    if (data.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6">${createEmptyState()}</td>
+            </tr>
+        `;
+        return;
+    }
+
+    tableBody.innerHTML = data
+        .map((item, index) => createTableRow(item, index))
+        .join('');
+}
+
+// Update results count
+function updateResultsCount(filtered, total) {
+    const countElement = document.getElementById('results-count');
+    if (countElement) {
+        countElement.textContent = `Showing ${filtered} of ${total} equipment`;
+    }
+}
+
+// Populate location filter dropdown
+function populateLocationFilter() {
+    const locations = [...new Set(allEquipmentData.map(item => item.location))].sort();
+    const locationFilter = document.getElementById('location-filter');
+    
+    // Clear existing options except "All Locations"
+    locationFilter.innerHTML = '<option value="all">All Locations</option>';
+    
+    // Add location options
+    locations.forEach(location => {
+        const option = document.createElement('option');
+        option.value = location;
+        option.textContent = location;
+        locationFilter.appendChild(option);
+    });
+}
+
+// Clear all filters
+function clearFilters() {
+    document.getElementById('search-input').value = '';
+    document.getElementById('status-filter').value = 'all';
+    document.getElementById('location-filter').value = 'all';
+    filterAndSearchEquipment();
 }
 
 // Render table
@@ -61,30 +148,46 @@ function renderTable() {
     fetch('/api/equipments')
         .then(response => response.json())
         .then(data => {
-            const tableBody = document.getElementById('table-body');
-            const tableData = data;
-            // Handle empty state
-            if (tableData.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="6">${createEmptyState()}</td>
-                    </tr>
-                `;
-                return;
-            }
-
-            // Render table
-            tableBody.innerHTML = tableData
-                                    .map((item, index) => createTableRow(item, index))
-                                    .join('');
+            allEquipmentData = data;
+            populateLocationFilter();
+            updateTable(allEquipmentData);
+            updateResultsCount(allEquipmentData.length, allEquipmentData.length);
         })
         .catch(error => {
             console.error('Error fetching data:', error);
+            const tableBody = document.getElementById('table-body');
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem; color: #e74c3c;">
+                        Error loading equipment data. Please refresh the page.
+                    </td>
+                </tr>
+            `;
         });
 }
 
-
-
 document.addEventListener('DOMContentLoaded', function() {
     renderTable();
+    
+    // Add event listeners for search and filters
+    const searchInput = document.getElementById('search-input');
+    const statusFilter = document.getElementById('status-filter');
+    const locationFilter = document.getElementById('location-filter');
+    const clearBtn = document.getElementById('clear-filters');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', filterAndSearchEquipment);
+    }
+
+    if (statusFilter) {
+        statusFilter.addEventListener('change', filterAndSearchEquipment);
+    }
+
+    if (locationFilter) {
+        locationFilter.addEventListener('change', filterAndSearchEquipment);
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearFilters);
+    }
 });

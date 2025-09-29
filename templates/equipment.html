@@ -26,7 +26,7 @@
 
       <div class="clearfix">
         <button type="button" class="cancelbtn">Cancel</button>
-        <button type="button" class="deletebtn" data-id="{{ equipment.id }}" onclick="deleteRow(this.dataset.id)">Delete</button>
+        <button type="button" class="deletebtn" data-id="{{ equipment.id }}" onclick="deleteRow({{equipment.id}})">Delete</button>
       </div>
     </div>
   </div>
@@ -40,7 +40,7 @@
         <div>
             <h1 class="equipment-name">{{ equipment.name }}</h1>
             <div class="equipment-meta">
-                <span>ID: EQP-{{ equipment.id }}</span>
+                <span>ID: EQP #{{ equipment.id }}</span>
                 <span>Serial: {{ equipment.serial_number }}</span>
                 <span>Qty: <span class="quantity-value">{{ equipment.quantity }} units</span></span>
             </div>
@@ -96,7 +96,7 @@
         <!-- Parameters Section -->
         {% if equipment.parameters %}
         <div class="parameters-section">
-            <h2 class="section-title">Technical Specifications</h2>
+            <h2 class="section-title">Parameters</h2>
             <div class="parameters-grid">
                 {% for param in equipment.parameters %}
                 <div class="parameter-card">
