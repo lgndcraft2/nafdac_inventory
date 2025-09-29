@@ -41,8 +41,9 @@
             </button>
             <div class="dropdown-menu" id="dropdownMenu">
                 <a href="#">Profile</a>
-                <a href="#">Settings</a>
-                <a href="#">Dashboard</a>
+                {% if user.roles == "admin" %}
+                <a href="/admin">Admin</a>
+                {% endif %}
                 <a href="/logout" class="logout">Logout</a>
             </div>
         </div>
@@ -105,13 +106,13 @@
             </div>
         </div> -->
         <div class="footer-bottom">
-            <p>&copy; 2025 Your Company. All rights reserved.</p>
-            <div class="social-links">
+            <p>&copy; 2025 NAFDAC. All rights reserved.</p>
+            <!-- <div class="social-links">
                 <a href="#">Twitter</a>
                 <a href="#">LinkedIn</a>
                 <a href="#">GitHub</a>
                 <a href="#">Instagram</a>
-            </div>
+            </div> -->
         </div>
     </div>
 </footer>

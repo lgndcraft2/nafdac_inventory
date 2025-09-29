@@ -22,11 +22,21 @@ class UpdateEquipmentFormValidator {
         this.validationTimeouts = {};
         this.uniqueIdValid = true;
         
+
+        this.parametersContainer = document.getElementById('parametersContainer');
+        this.parametersEmpty = document.getElementById('parametersEmpty');
+        this.addParameterBtn = document.getElementById('addParameterBtn');
+        const preloadedItems = this.parametersContainer.querySelectorAll('.parameter-item');
+        this.parameterCount = preloadedItems.length;
+
+        this.parameters = [];
+
         this.init();
     }
 
     init() {
         this.form.addEventListener('submit', this.handleSubmit.bind(this));
+        this.addParameterBtn.addEventListener('click', this.addParameter.bind(this));
         
         Object.keys(this.fields).forEach(fieldName => {
             const field = this.fields[fieldName];
@@ -37,9 +47,84 @@ class UpdateEquipmentFormValidator {
                     clearTimeout(this.validationTimeouts[fieldName]);
                     this.validationTimeouts[fieldName] = setTimeout(() => {
                         this.validateField(fieldName);
-                    }, 5);
+                    }, 500);
                 }
             });
+        });
+        const parameterItems = this.parametersContainer.querySelectorAll('.parameter-item');
+        parameterItems.forEach(item => {
+            const nameInput = item.querySelector('.param-name');
+            const valueInput = item.querySelector('.param-value');
+            if (nameInput.value.trim() || valueInput.value.trim()) {
+                this.parameters.push({
+                    name: nameInput.value.trim(),
+                    value: valueInput.value.trim()
+                });
+            }
+
+            // Make sure changes update `this.parameters`
+            nameInput.addEventListener('input', () => this.updateParametersData());
+            valueInput.addEventListener('input', () => this.updateParametersData());
+        });
+    }
+
+     addParameter() {
+        this.parameterCount++;
+        const parameterItem = document.createElement('div');
+        parameterItem.className = 'parameter-item';
+        parameterItem.dataset.parameterId = this.parameterCount;
+        
+        parameterItem.innerHTML = `
+            <input type="text" placeholder="Parameter Name (e.g., Voltage, Temperature)" class="param-name" data-param-id="${this.parameterCount}">
+            <input type="text" placeholder="Value (e.g., 220V, -40°C to +85°C)" class="param-value" data-param-id="${this.parameterCount}">
+            <button type="button" class="remove-parameter-btn" onclick="update_equipment_form_validator.removeParameter(${this.parameterCount})">×</button>
+        `;
+        
+        this.parametersContainer.appendChild(parameterItem);
+        this.parametersEmpty.style.display = 'none';
+        
+        // Add event listeners for the new parameter inputs
+        const nameInput = parameterItem.querySelector('.param-name');
+        const valueInput = parameterItem.querySelector('.param-value');
+        
+        nameInput.addEventListener('input', () => this.updateParametersData());
+        valueInput.addEventListener('input', () => this.updateParametersData());
+        
+        // Focus on the name input
+        nameInput.focus();
+        
+        this.updateParametersData();
+    }
+
+    removeParameter(parameterId) {
+        // Fix: Use the correct data attribute selector
+        const parameterItem = document.querySelector(`[data-parameter-id="${parameterId}"]`);
+        if (parameterItem) {
+            parameterItem.remove();
+            this.updateParametersData();
+            
+            // Show empty message if no parameters left
+            const remainingItems = this.parametersContainer.querySelectorAll('.parameter-item');
+            if (remainingItems.length === 0) {
+                this.parametersEmpty.style.display = 'block';
+            }
+        }
+    }
+
+    updateParametersData() {
+        this.parameters = [];
+        const parameterItems = this.parametersContainer.querySelectorAll('.parameter-item');
+        
+        parameterItems.forEach(item => {
+            const nameInput = item.querySelector('.param-name');
+            const valueInput = item.querySelector('.param-value');
+            
+            if (nameInput.value.trim() || valueInput.value.trim()) {
+                this.parameters.push({
+                    name: nameInput.value.trim(),
+                    value: valueInput.value.trim()
+                });
+            }
         });
     }
 
@@ -197,6 +282,8 @@ class UpdateEquipmentFormValidator {
         e.preventDefault();
         this.successMessage.classList.remove('show');
 
+        this.updateParametersData();
+
         const isFormValid = await this.validateForm();
 
         // Await uniqueness check if ID provided
@@ -214,6 +301,7 @@ class UpdateEquipmentFormValidator {
             Object.keys(this.fields).forEach(fieldName => {
                 formData[fieldName] = this.fields[fieldName].value.trim();
             });
+            formData.parameters = this.parameters;
 
             fetch(`/api/updateEquipment/${this.equipmentId}`, {
                 method: 'PUT',
@@ -264,6 +352,8 @@ class UpdateEquipmentFormValidator {
     // }
 }
 
+let update_equipment_form_validator;
+
 document.addEventListener('DOMContentLoaded', () => {
-    new UpdateEquipmentFormValidator();
+    update_equipment_form_validator = new UpdateEquipmentFormValidator();
 });

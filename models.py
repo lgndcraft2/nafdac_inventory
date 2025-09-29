@@ -114,7 +114,11 @@ class Equipment(db.Model):
             "quantity": self.quantity,
             "created_at": self.created_at.isoformat(),
             "cal_status": self.cal_status,
-            "mnt_status": self.mnt_status
+            "mnt_status": self.mnt_status,
+            "parameters": [
+            {"name": p.parameter_name, "value": p.parameter_value}
+            for p in self.parameters
+        ]
         }
     
     def __repr__(self):
@@ -129,3 +133,15 @@ def set_dates_before_insert(mapper, connection, target):
 def set_dates_before_update(mapper, connection, target):
     target.set_next_calibration_date()
     target.set_next_maintenance_date()
+
+
+class EquipmentParameter(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    equipment_id = db.Column(db.Integer, db.ForeignKey('equipment.id'), nullable=False)
+    parameter_name = db.Column(db.String(150), nullable=False)
+    parameter_value = db.Column(db.String(150), nullable=False)
+
+    equipment = db.relationship('Equipment', backref=db.backref('parameters', lazy=True))
+
+    def __repr__(self):
+        return f'<EquipmentParameter {self.parameter_name}: {self.parameter_value}>'

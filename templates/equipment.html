@@ -93,6 +93,30 @@
             </div>
         </div>
 
+        <!-- Parameters Section -->
+        {% if equipment.parameters %}
+        <div class="parameters-section">
+            <h2 class="section-title">Technical Specifications</h2>
+            <div class="parameters-grid">
+                {% for param in equipment.parameters %}
+                <div class="parameter-card">
+                    <span class="parameter-name">{{ param.parameter_name }}</span>
+                    <span class="parameter-value">{{ param.parameter_value }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Description Section -->
+        {% if equipment.description %}
+        <div class="description-section">
+            <h2 class="section-title">Description</h2>
+            <p class="description-text">{{ equipment.description }}</p>
+        </div>
+        {% endif %}
+
+ {% if user.roles == "admin" %}
         <!-- Action Buttons -->
         <div class="buttons">
             <button class="action-button action-delete" onclick="openModal()">
@@ -111,7 +135,7 @@
                 </svg>
                 <span>Edit</span>
             </button>
-
+{% endif %}
             <button class="action-button action-calibrated" onclick="alert('Calibration marked as completed!')">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 

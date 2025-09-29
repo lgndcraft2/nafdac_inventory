@@ -92,6 +92,32 @@
                 <div class="error-message" id="description-error">Description is too long</div>
             </div>
 
+            <div class="form-group full-width">
+                    <div class="parameters-section">
+                        <div class="parameters-header">
+                            <span class="parameters-title">Equipment Parameters</span>
+                            <button type="button" class="add-parameter-btn" id="addParameterBtn">
+                                <span>+</span> Add Parameter
+                            </button>
+                        </div>
+                        <div id="parametersContainer">
+                            {% if equipment.parameters %}
+                                {% for p in equipment.parameters %}
+                                <div class="parameter-item" data-parameter-id="{{loop.index}}">
+                                    <input type="text" class="param-name" value="{{p.parameter_name}}">
+                                    <input type="text" class="param-value" value="{{p.parameter_value}}">
+                                    <button type="button" class="remove-parameter-btn" onclick="update_equipment_form_validator.removeParameter({{loop.index}})">×</button>
+                                </div>
+                                {% endfor %}
+                            {%else%}
+                                <div class="parameters-empty" id="parametersEmpty">
+                                    No parameters added yet. Click "Add Parameter" to add equipment specifications.
+                                </div>
+                            {%endif%}
+                        </div>
+                    </div>
+            </div>
+
             <button type="submit" class="submit-btn">Update Equipment</button>
         </div>
     </form>

@@ -19,6 +19,8 @@ function getRoleClass(role) {
     }
 }
 
+let users = [];
+
 // Function to update user counts
 function updateUserCounts() {
     const normalUsers = users.filter(user => user.roles.toLowerCase() === 'user').length;
@@ -47,7 +49,7 @@ function renderUsersTable(usersToRender = users) {
                 <div class="action-buttons">
                     <button class="delete-btn" onclick="deleteUser(${user.id})">Delete User</button>
                     <div class="role-dropdown">
-                        <button class="dropdown-btn" onclick="toggleDropdown(${user.id})">
+                        <button class="dropdown-btn" data-id="${user.id}">
                             Change Role ▼
                         </button>
                         <div class="dropdown-content" id="dropdown-${user.id}">
@@ -61,27 +63,30 @@ function renderUsersTable(usersToRender = users) {
         `;
         tbody.appendChild(row);
     });
+    attachDropdownListeners();
 }
 
 async function fetchUsers() {
-    const response = await fetch('/api/users');
+    const response = await fetch('/api/admin/users');
     if (response.ok) {
+        console.log('Fetched users successfully');
+        console.log(response);
         users = await response.json();
-        renderUsersTable();
+        renderUsersTable(users);
         updateUserCounts();
     } else {
         console.error('Failed to fetch users');
     }
 }
 
-
 // Function to delete user
 function deleteUser(userId) {
     if (confirm('Are you sure you want to delete this user?')) {
-        users = users.filter(user => user.id !== userId);
-        renderUsersTable();
+        response = fetch(`/api/admin/delete_user/${userId}`, {
+            method: 'DELETE'
+        });
+        fetchUsers();
         updateUserCounts();
-        console.log(`User ${userId} deleted`);
     }
 }
 
@@ -95,20 +100,40 @@ function changeRole(userId, newRole) {
         console.log(`User ${userId} role changed to ${newRole}`);
     }
     // Close dropdown
-    document.getElementById(`dropdown-${userId}`).parentElement.classList.remove('show');
+    const dropdownWrapper = document.getElementById(`dropdown-${userId}`).parentElement;
+    if (dropdownWrapper) dropdownWrapper.classList.remove('show');
 }
 
-// Function to toggle dropdown
-function toggleDropdown(userId) {
-    const dropdown = document.getElementById(`dropdown-${userId}`).parentElement;
+
+function attachDropdownListeners() {
+    document.querySelectorAll('.dropdown-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation(); // prevent doc click from closing immediately
+            e.preventDefault();
+            const userId = btn.getAttribute('data-id');
+            const dropdownWrapper = document.querySelector(`#dropdown-${userId}`).parentElement;
     
-    // Close all other dropdowns
-    document.querySelectorAll('.role-dropdown.show').forEach(d => {
-        if (d !== dropdown) d.classList.remove('show');
+    
+            // Close all other dropdowns first
+            document.querySelectorAll('.role-dropdown.show').forEach(d => {
+                if (d !== dropdownWrapper) d.classList.remove('show');
+            });
+            
+            // Toggle the current dropdown
+            dropdownWrapper.classList.toggle('show');
+        });
     });
-    
-    dropdown.classList.toggle('show');
 }
+
+// FIXED: Close dropdowns when clicking outside
+document.addEventListener('click', function(e) {
+    // Check if the click is outside of any dropdown
+    if (!e.target.closest('.role-dropdown')) {
+        document.querySelectorAll('.role-dropdown.show').forEach(dropdown => {
+            dropdown.classList.remove('show');
+        });
+    }
+});
 
 // Search functionality
 document.getElementById('search-input').addEventListener('input', function(e) {
@@ -121,17 +146,9 @@ document.getElementById('search-input').addEventListener('input', function(e) {
     renderUsersTable(filteredUsers);
 });
 
-// Close dropdowns when clicking outside
-document.addEventListener('click', function(e) {
-    if (!e.target.matches('.dropdown-btn')) {
-        document.querySelectorAll('.role-dropdown.show').forEach(dropdown => {
-            dropdown.classList.remove('show');
-        });
-    }
-});
-
 // Initialize the dashboard
 document.addEventListener('DOMContentLoaded', function() {
+    fetchUsers();
     updateUserCounts();
     renderUsersTable();
 });

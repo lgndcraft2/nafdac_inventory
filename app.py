@@ -8,7 +8,8 @@ import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 import atexit
-from models import db, User, Equipment
+from models import db, User, Equipment, EquipmentParameter
+from flask_migrate import Migrate
 
 load_dotenv()
 
@@ -31,6 +32,7 @@ app.config['MAIL_USE_SSL'] = True
 
 
 db.init_app(app)
+migrate = Migrate(app, db)
 
 mail = Mail(app)
 
@@ -47,6 +49,10 @@ def make_session_permanent():
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
+
+@app.context_processor
+def inject_user():
+    return dict(user=current_user)
 
 @app.route('/')
 def home():
@@ -180,7 +186,8 @@ def equipment_page(equipment_id):
 @login_required
 def add_equipment():
     data = request.json
-
+    parameters = data.get('parameters', [])
+    
     calibration_date = (
         datetime.strptime(data.get('calibration_date'), "%Y-%m-%d").date()
         if data.get('calibration_date') else None
@@ -205,6 +212,19 @@ def add_equipment():
         quantity=data.get('quantity', 1)
     )
     db.session.add(new_equipment)
+    db.session.flush()  # Get ID before committing
+
+    if parameters:
+        for param in parameters:
+            name = param.get('name')
+            value = param.get('value')
+            if name or value:
+                new_parameters = EquipmentParameter(
+                    equipment_id=new_equipment.id,
+                    parameter_name=name,
+                    parameter_value=value
+                )
+                db.session.add(new_parameters)
     db.session.commit()
     return jsonify(new_equipment.to_dict()), 201
 
@@ -236,18 +256,35 @@ def update_equipment(equipment_id):
     equipment.description = data.get('description', equipment.description)
     equipment.quantity = data.get('quantity', equipment.quantity)
 
-     # ✅ Convert calibration_date if provided
+     #Convert calibration_date if provided
     cal_date = data.get('calibration_date')
     if cal_date:
         equipment.calibration_date = datetime.strptime(cal_date, "%Y-%m-%d").date()
 
-    # ✅ Convert maintenance_date if provided
+    #Convert maintenance_date if provided
     mnt_date = data.get('maintenance_date')
     if mnt_date:
         equipment.maintenance_date = datetime.strptime(mnt_date, "%Y-%m-%d").date()
 
     equipment.set_next_calibration_date()
     equipment.set_next_maintenance_date()
+
+    new_parameters = data.get('parameters', [])
+    print(new_parameters)
+    EquipmentParameter.query.filter_by(equipment_id=equipment.id).delete()
+    db.session.flush()
+
+    if new_parameters:
+        for param in new_parameters:
+            name = param.get('name')
+            value = param.get('value')
+            if name or value:
+                new_params = EquipmentParameter(
+                    equipment_id=equipment.id,
+                    parameter_name=name,
+                    parameter_value=value
+                )
+                db.session.add(new_params)
 
     db.session.commit()
     return jsonify(equipment.to_dict())
@@ -341,8 +378,8 @@ def send_due_maintenance_notifications():
             print("No equipment due for maintenance in the next 30 days.")
 
 if __name__ == "__main__":
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(func=send_due_maintenance_notifications, trigger="interval", seconds=10, max_instances=3, coalesce=True)  # ✅ shortened
-    scheduler.start()
-    atexit.register(lambda: scheduler.shutdown(wait=False))
+    # scheduler = BackgroundScheduler()
+    # scheduler.add_job(func=send_due_maintenance_notifications, trigger="interval", seconds=10, max_instances=3, coalesce=True)  # ✅ shortened
+    # scheduler.start()
+    # atexit.register(lambda: scheduler.shutdown(wait=False))
     app.run(debug=True, use_reloader=False)
