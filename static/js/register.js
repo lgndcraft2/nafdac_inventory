@@ -8,12 +8,16 @@ class RegistrationForm {
             username: document.getElementById('username'),
             email: document.getElementById('email'),
             password: document.getElementById('password'),
+            unit: document.getElementById('unit'),
+            branch: document.getElementById('branch'),
             confirmPassword: document.getElementById('confirmPassword')
         };
 
         this.errors = {
             username: document.getElementById('usernameError'),
             email: document.getElementById('emailError'),
+            unit: document.getElementById('unitError'),
+            branch: document.getElementById('branchError'),
             password: document.getElementById('passwordError'),
             confirmPassword: document.getElementById('confirmPasswordError')
         };
@@ -153,6 +157,8 @@ class RegistrationForm {
         const formData = {
             username: this.fields.username.value.trim(),
             email: this.fields.email.value.trim(),
+            unit: this.fields.unit.value.trim(),
+            branch: this.fields.branch.value.trim(),
             password: this.fields.password.value,
             roles: 'user' // Default role as per your model
         };
