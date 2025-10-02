@@ -32,6 +32,38 @@
   </div>
 </div>
 
+<!-- Maintained Modal-->
+<div id="id02" class="modal">
+  <span onclick="document.getElementById('id02').style.display='none'" class="close" title="Close Modal">&times;</span>
+  <div class="modal-content">
+    <div class="container">
+      <h1>Mark Maintenance as Completed</h1>
+      <p>Are you sure you want to mark this equipment as maintained?</p>
+
+      <div class="clearfix">
+        <button type="button" class="cancelbtn" onclick="document.getElementById('id02').style.display='none'">Cancel</button>
+        <button type="button" class="maintainedbtn" data-id="{{ equipment.id }}" onclick="markMaintained({{equipment.id}})">Yes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Calibrate Modal-->
+<div id="id03" class="modal">
+  <span onclick="document.getElementById('id03').style.display='none'" class="close" title="Close Modal">&times;</span>
+  <div class="modal-content">
+    <div class="container">
+      <h1>Mark Calibration as Completed</h1>
+      <p>Are you sure you want to mark this equipment as calibrated?</p>
+
+      <div class="clearfix">
+        <button type="button" class="cancelbtn" onclick="document.getElementById('id03').style.display='none'">Cancel</button>
+        <button type="button" class="calibratebtn" data-id="{{ equipment.id }}" onclick="markCalibrated({{equipment.id}})">Yes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Equipment Card -->
 <div class="equipment-card">
 
@@ -136,7 +168,7 @@
                 <span>Edit</span>
             </button>
 {% endif %}
-            <button class="action-button action-calibrated" onclick="alert('Calibration marked as completed!')">
+            <button class="action-button action-calibrated" onclick="openCalibrationModal()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                           d="M5 13l4 4L19 7"></path>
@@ -144,7 +176,7 @@
                 <span>Calibrated</span>
             </button>
 
-            <button class="action-button action-maintained" onclick="alert('Maintenance marked as completed!')">
+            <button class="action-button action-maintained" onclick="openMaintenanceModal()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                           d="M9 12l2 2l4-4m6 2a9 9 0 11-18 0a9 9 0 0118 0z"></path>

@@ -83,12 +83,12 @@
             </div>
 
             <div class="form-group">
-                <input type="number" name="quantity" placeholder="Quantity" value="1" min="1" value="{{equipment.quantity}}">
+                <input type="number" name="quantity" placeholder="Quantity" min="1" value="{{equipment.quantity}}">
                 <div class="error-message" id="quantity-error">Quantity must be at least 1</div>
             </div>
 
             <div class="form-group full-width">
-                <textarea name="description" placeholder="Equipment Description (optional)"></textarea>
+                <textarea name="description" placeholder="Equipment Description (optional)">{{equipment.description}}</textarea>
                 <div class="error-message" id="description-error">Description is too long</div>
             </div>
 

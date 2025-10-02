@@ -5,7 +5,7 @@ async function deleteRow(id) {
         });
 
         if (response.ok) {
-            window.location.href = '/dashboard';
+            window.location.href = '/request.referrer';
         } else {
             alert('Failed to delete equipment.');
         }
@@ -51,6 +51,57 @@ function openModal() {
         modal.style.display = "none";
     }
 }
+
+function openMaintenanceModal(){
+    document.getElementById('id02').style.display='block';
+    var modal = document.getElementById('id02');
+    var cancelBtn = modal.querySelector('.cancelbtn');
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+    cancelBtn.onclick = function() {
+        modal.style.display = "none";
+    }
+}
+
+function openCalibrationModal(){
+    document.getElementById('id03').style.display='block';
+    var modal = document.getElementById('id03');
+    var cancelBtn = modal.querySelector('.cancelbtn');
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+    cancelBtn.onclick = function() {
+        modal.style.display = "none";
+    }
+}
+
+async function markMaintained(equipmentId) {
+    const response = await fetch(`/api/maintain/${equipmentId}`, {
+        method: 'PUT'
+    });
+    if (response.ok) {
+        window.location.reload();
+    } else {
+        alert('Failed to mark maintenance as completed.');
+    }
+}
+
+async function markCalibrated(equipmentId) {
+    const response = await fetch(`/api/calibrate/${equipmentId}`, {
+        method: 'PUT'
+    });
+    if (response.ok) {
+        window.location.reload();
+    } else{
+        alert("Failed to mark alibration as completed");
+    }
+}
+
 
 document.addEventListener('DOMContentLoaded', function() {
     // renderTable();

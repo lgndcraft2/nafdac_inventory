@@ -292,6 +292,31 @@ def delete_equipment(equipment_id):
     db.session.commit()
     return jsonify({"message": "Equipment deleted"}), 200
 
+@app.route('/api/calibrate/<int:equipment_id>', methods=['PUT'])
+@login_required
+def calibrate_equipment(equipment_id):
+    equipment = Equipment.query.get_or_404(equipment_id)
+    calibration_date = datetime.now().date().strftime("%Y-%m-%d")
+
+    if calibration_date:
+        equipment.calibration_date = datetime.strptime(calibration_date, "%Y-%m-%d").date()
+        equipment.set_next_calibration_date()
+        db.session.commit()
+        return jsonify(equipment.to_dict()), 200
+    return jsonify({"error": "Calibration date is required"}), 400
+
+@app.route('/api/maintain/<int:equipment_id>', methods=['PUT'])
+@login_required
+def maintain_equipment(equipment_id):
+    equipment = Equipment.query.get_or_404(equipment_id)
+    maintenance_date = datetime.now().date().strftime("%Y-%m-%d")
+
+    if maintenance_date:
+        equipment.maintenance_date = datetime.strptime(maintenance_date, "%Y-%m-%d").date()
+        equipment.set_next_maintenance_date()
+        db.session.commit()
+        return jsonify(equipment.to_dict()), 200
+    return jsonify({"error": "Maintenance date is required"}), 400
 
 @app.route('/api/admin/update_role/<int:user_id>', methods=['PUT'])
 @login_required

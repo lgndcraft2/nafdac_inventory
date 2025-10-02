@@ -514,7 +514,7 @@
     margin-top: 2rem;
 }
 
-.cancelbtn, .deletebtn {
+.cancelbtn, .deletebtn, .maintainedbtn, .calibratebtn {
     flex: 1;
     padding: 0.875rem 1.5rem;
     border: none;
@@ -542,6 +542,26 @@
 }
 
 .deletebtn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.maintainedbtn {
+    background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-light) 100%);
+    color: white;
+}
+
+.maintainedbtn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.calibratebtn {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+    color: white;
+}
+
+.calibratebtn:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
