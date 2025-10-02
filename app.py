@@ -8,13 +8,15 @@ import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 import atexit
-from models import db, User, Equipment, EquipmentParameter
+from .models import db, User, Equipment, EquipmentParameter
 from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFProtect
+from flask_talisman import Talisman
 
 load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'findThisOutBitch'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 uri = os.environ.get("DATABASE_URL", "sqlite:///default.db")
 if uri.startswith("postgres://"):
     uri = uri.replace("postgres://", "postgresql://", 1)
@@ -30,9 +32,17 @@ app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')  # app password
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
 app.config['MAIL_USE_SSL'] = True
 
+# app.config['SESSION_COOKIE_SECURE'] = True
+# app.config['SESSION_COOKIE_HTTPONLY'] = True
+# app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+app.permanent_session_lifetime = timedelta(minutes=60)
 
 db.init_app(app)
 migrate = Migrate(app, db)
+
+#csrf = CSRFProtect(app)
+#Talisman(app, force_https=True, strict_transport_security=True)
 
 mail = Mail(app)
 
@@ -43,7 +53,6 @@ login_manager.login_view = "login"
 @app.before_request
 def make_session_permanent():
     session.permanent = True
-    app.permanent_session_lifetime = timedelta(minutes=60)
 
 
 @login_manager.user_loader
@@ -126,7 +135,7 @@ def api_login():
 @login_required
 def admin_page():
     if 'admin' not in current_user.roles:
-        return "Access denied", 403
+        return redirect(url_for('dashboard'))
     return render_template('adminPage.html')
 
 @app.route('/api/admin/users', methods=['GET'])
@@ -141,28 +150,14 @@ def get_users():
         "created_at": user.created_at.isoformat()
     } for user in users])
 
-@app.route('/api/admin/adminify/<int:user_id>', methods=['PUT'])
-@login_required
-def adminify_user(user_id):
-    if 'admin' not in current_user.roles:
-        return jsonify({"error": "Access denied"}), 403
-
-    user = User.query.get_or_404(user_id)
-    if user.roles == 'admin':
-        return jsonify({"error": "User is already an admin"}), 400
-
-    user.roles = 'admin'
-    db.session.commit()
-    return jsonify({"message": "User promoted to admin"}), 200
-
 @app.route('/api/admin/delete_user/<int:user_id>', methods=['DELETE'])
 @login_required
 def delete_user(user_id):
-    if 'admin' not in current_user.roles:
+    if 'admin' != current_user.roles:
         return jsonify({"error": "Access denied"}), 403
 
     user = User.query.get_or_404(user_id)
-    if user.id == current_user.id or user.roles == 'admin':
+    if user.id == current_user.id or user.roles == 'admin' or user.id == 1:
         return jsonify({"error": "You cannot delete your own account"}), 400
 
     db.session.delete(user)
@@ -297,6 +292,26 @@ def delete_equipment(equipment_id):
     db.session.commit()
     return jsonify({"message": "Equipment deleted"}), 200
 
+
+@app.route('/api/admin/update_role/<int:user_id>', methods=['PUT'])
+@login_required
+def update_user_role(user_id):
+    if 'admin' != current_user.roles:
+        return jsonify({"error": "Access denied"}), 403
+
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id or user.id == 1:
+        return jsonify({"error": "Access denied"}), 403
+    data = request.get_json()
+    new_role = data.get('role')
+
+    if not new_role or new_role not in ['admin', 'user']:
+        return jsonify({"error": "Invalid role"}), 400
+
+    user.roles = new_role
+    db.session.commit()
+    return jsonify({"message": f"User role updated to {new_role}"}), 200
+
 @app.route('/api/check-id-uniqueness')
 @login_required
 def check_id_uniqueness():
@@ -317,35 +332,16 @@ def check_id_uniqueness():
 
     return jsonify({"isUnique": not exists})
 
-@app.route('/test-route', methods=['GET'])
-def tests():
-    user = User.query.first()
-    if not user:
-        return "❌ No user found in DB"
-
-    msg = Message(
-        subject="Test Email",
-        recipients=[user.email],
-        body="If you see this, mail works."
-    )
-    try:
-        mail.send(msg)
-        return "✅ Test mail sent!"
-    except Exception as e:
-        print("❌ Mail error:", e)
-        return f"Error: {e}"
-
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('home'))
 
-with app.app_context():
-    db.create_all()
-
 def send_due_maintenance_notifications():
     with app.app_context():
+        users = User.query.all()
+        recipients = [user.email for user in users if user.roles == 'admin']
         today = datetime.utcnow().date()
         upcoming_date = today + timedelta(days=30)
 
@@ -354,20 +350,25 @@ def send_due_maintenance_notifications():
             Equipment.next_maintenance_date <= upcoming_date
         ).all()
 
+        due_equipments_cal = Equipment.query.filter(
+            Equipment.next_calibration_date != None,
+            Equipment.next_calibration_date <= upcoming_date
+        ).all()
+
         if due_equipments:
             user = User.query.first()
             if not user:
                 print("❌ No user found for sending notifications.")
                 return
-
+            
             equipment_list = "\n".join(
                 [f"- {eq.name} (Next Maintenance: {eq.next_maintenance_date})" for eq in due_equipments]
             )
 
             msg = Message(
                 subject="Upcoming Equipment Maintenance Notification",
-                recipients=[user.email],
-                body=f"The following equipment are due for maintenance within the next 30 days:\n\n{equipment_list}"
+                recipients=recipients,
+                body=f"The following equipment are due for maintenance within the next 30 days:\n\n{equipment_list} \n\nPlease take the necessary actions."
             )
             try:
                 mail.send(msg)
@@ -376,10 +377,31 @@ def send_due_maintenance_notifications():
                 print("❌ Failed to send maintenance notification:", e)
         else:
             print("No equipment due for maintenance in the next 30 days.")
+        
+        if due_equipments_cal:
+            user = User.query.first()
+            if not user:
+                print("❌ No user found for sending notifications.")
+                return
+           
+            equipment_list_cal = "\n".join(
+                [f"- {eq.name} (Next Calibration: {eq.next_calibration_date})" for eq in due_equipments_cal]
+            )
+
+            msg = Message(
+                subject="Upcoming Equipment Calibration Notification",
+                recipients=recipients,
+                body=f"The following equipment are due for calibration within the next 30 days:\n\n{equipment_list_cal} \n\nPlease take the necessary actions."
+            )
+            try:
+                mail.send(msg)
+                print("✅ Calibration notification sent.")
+            except Exception as e:
+                print("❌ Failed to send calibration notification:", e)
 
 if __name__ == "__main__":
-    # scheduler = BackgroundScheduler()
-    # scheduler.add_job(func=send_due_maintenance_notifications, trigger="interval", seconds=10, max_instances=3, coalesce=True)  # ✅ shortened
-    # scheduler.start()
-    # atexit.register(lambda: scheduler.shutdown(wait=False))
-    app.run(debug=True, use_reloader=False)
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=send_due_maintenance_notifications, trigger="cron", hour=9, minute=0, coalesce=True)
+    scheduler.start()
+    atexit.register(lambda: scheduler.shutdown(wait=False))
+    app.run(host="0.0.0.0", use_reloader=False, debug=False)

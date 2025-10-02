@@ -64,7 +64,7 @@
                         <option value="">Select Frequency</option>
                         <option value="Monthly" {% if equipment.calibration_frequency == 'Monthly' %}selected{% endif %}>Monthly</option>
                         <option value="Quarterly" {% if equipment.calibration_frequency == 'Quarterly' %}selected{% endif %}>Quarterly</option>
-                        <option value="Semi-Annual" {% if equipment.calibration_frequency == 'Semi-Annual' %}selected{% endif %}>Semi-Annual</option>
+                        <option value="Semi-Annual" {% if equipment.calibration_frequency == 'Semi-Annual' %}selected{% endif %}>Bi-Annual</option>
                         <option value="Annual" {% if equipment.calibration_frequency == 'Annual' %}selected{% endif %}>Annual</option>
                     </select>
                     <div class="error-message" id="calibration_frequency-error">Please select calibration frequency</div>
@@ -75,7 +75,7 @@
                         <option value="">Select Frequency</option>
                         <option value="Monthly" {% if equipment.maintenance_frequency == 'Monthly' %}selected{% endif %}>Monthly</option>
                         <option value="Quarterly" {% if equipment.maintenance_frequency == 'Quarterly' %}selected{% endif %}>Quarterly</option>
-                        <option value="Semi-Annual" {% if equipment.maintenance_frequency == 'Semi-Annual' %}selected{% endif %}>Semi-Annual</option>
+                        <option value="Semi-Annual" {% if equipment.maintenance_frequency == 'Semi-Annual' %}selected{% endif %}>Bi-Annual</option>
                         <option value="Annual" {% if equipment.maintenance_frequency == 'Annual' %}selected{% endif %}>Annual</option>
                     </select>
                     <div class="error-message" id="maintenance_frequency-error">Please select maintenance frequency</div>

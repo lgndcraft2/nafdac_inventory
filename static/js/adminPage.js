@@ -14,7 +14,6 @@ function formatDate(dateString) {
 function getRoleClass(role) {
     switch(role.toLowerCase()) {
         case 'admin': return 'role-admin';
-        case 'editor': return 'role-editor';
         default: return 'role-user';
     }
 }
@@ -24,11 +23,9 @@ let users = [];
 // Function to update user counts
 function updateUserCounts() {
     const normalUsers = users.filter(user => user.roles.toLowerCase() === 'user').length;
-    const editors = users.filter(user => user.roles.toLowerCase() === 'editor').length;
     const admins = users.filter(user => user.roles.toLowerCase() === 'admin').length;
 
     document.getElementById('normal-users-count').textContent = normalUsers;
-    document.getElementById('editors-count').textContent = editors;
     document.getElementById('admins-count').textContent = admins;
 }
 
@@ -39,6 +36,9 @@ function renderUsersTable(usersToRender = users) {
 
     usersToRender.forEach(user => {
         const row = document.createElement('tr');
+        const currentRole = user.roles.toLowerCase();
+        const nextRole = currentRole === 'admin' ? 'user' : 'admin';
+        
         row.innerHTML = `
             <td>${user.id}</td>
             <td>${user.username}</td>
@@ -48,22 +48,14 @@ function renderUsersTable(usersToRender = users) {
             <td>
                 <div class="action-buttons">
                     <button class="delete-btn" onclick="deleteUser(${user.id})">Delete User</button>
-                    <div class="role-dropdown">
-                        <button class="dropdown-btn" data-id="${user.id}">
-                            Change Role ▼
-                        </button>
-                        <div class="dropdown-content" id="dropdown-${user.id}">
-                            <a href="#" onclick="changeRole(${user.id}, 'user')">User</a>
-                            <a href="#" onclick="changeRole(${user.id}, 'editor')">Editor</a>
-                            <a href="#" onclick="changeRole(${user.id}, 'admin')">Admin</a>
-                        </div>
-                    </div>
+                    <button class="toggle-role-btn" onclick="toggleRole(${user.id})" data-next-role="${nextRole}">
+                        Switch to ${nextRole.charAt(0).toUpperCase() + nextRole.slice(1)}
+                    </button>
                 </div>
             </td>
         `;
         tbody.appendChild(row);
     });
-    attachDropdownListeners();
 }
 
 async function fetchUsers() {
@@ -90,50 +82,25 @@ function deleteUser(userId) {
     }
 }
 
-// Function to change user role
-function changeRole(userId, newRole) {
+// Function to toggle user role
+function toggleRole(userId) {
     const user = users.find(u => u.id === userId);
     if (user) {
+        const currentRole = user.roles.toLowerCase();
+        const newRole = currentRole === 'admin' ? 'user' : 'admin';
         user.roles = newRole;
         renderUsersTable();
         updateUserCounts();
         console.log(`User ${userId} role changed to ${newRole}`);
-    }
-    // Close dropdown
-    const dropdownWrapper = document.getElementById(`dropdown-${userId}`).parentElement;
-    if (dropdownWrapper) dropdownWrapper.classList.remove('show');
-}
-
-
-function attachDropdownListeners() {
-    document.querySelectorAll('.dropdown-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation(); // prevent doc click from closing immediately
-            e.preventDefault();
-            const userId = btn.getAttribute('data-id');
-            const dropdownWrapper = document.querySelector(`#dropdown-${userId}`).parentElement;
-    
-    
-            // Close all other dropdowns first
-            document.querySelectorAll('.role-dropdown.show').forEach(d => {
-                if (d !== dropdownWrapper) d.classList.remove('show');
-            });
-            
-            // Toggle the current dropdown
-            dropdownWrapper.classList.toggle('show');
-        });
-    });
-}
-
-// FIXED: Close dropdowns when clicking outside
-document.addEventListener('click', function(e) {
-    // Check if the click is outside of any dropdown
-    if (!e.target.closest('.role-dropdown')) {
-        document.querySelectorAll('.role-dropdown.show').forEach(dropdown => {
-            dropdown.classList.remove('show');
+        
+        //Optional: Add API call here to persist the change
+        fetch(`/api/admin/update_role/${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: newRole })
         });
     }
-});
+}
 
 // Search functionality
 document.getElementById('search-input').addEventListener('input', function(e) {
