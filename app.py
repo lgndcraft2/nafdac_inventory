@@ -288,6 +288,9 @@ def update_equipment(equipment_id):
 @login_required
 def delete_equipment(equipment_id):
     equipment = Equipment.query.get_or_404(equipment_id)
+    equipmentParams = EquipmentParameter.query.filter_by(equipment_id=equipment.id).all()
+    for param in equipmentParams:
+        db.session.delete(param)
     db.session.delete(equipment)
     db.session.commit()
     return jsonify({"message": "Equipment deleted"}), 200
@@ -426,7 +429,7 @@ def send_due_maintenance_notifications():
 
 if __name__ == "__main__":
     scheduler = BackgroundScheduler()
-    scheduler.add_job(func=send_due_maintenance_notifications, trigger="cron", hour=9, minute=0, coalesce=True)
+    scheduler.add_job(func=send_due_maintenance_notifications, trigger="interval", seconds=10, max_instances=3, coalesce=True)
     scheduler.start()
     atexit.register(lambda: scheduler.shutdown(wait=False))
     app.run(host="0.0.0.0", use_reloader=False, debug=False)

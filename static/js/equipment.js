@@ -5,7 +5,7 @@ async function deleteRow(id) {
         });
 
         if (response.ok) {
-            window.location.href = '/request.referrer';
+            window.location.href = '/dashboard';
         } else {
             alert('Failed to delete equipment.');
         }
