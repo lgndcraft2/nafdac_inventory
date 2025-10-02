@@ -190,13 +190,13 @@ class EquipmentFormValidator {
         const data = await response.json();
 
         if (data.isUnique) {
-            // ✅ ID is available
+            // ID is available
             field.classList.remove('checking', 'error');
             field.classList.add('success');
             errorElement.classList.remove('show');
             return true;
         } else {
-            // ❌ ID already exists
+            //ID already exists
             field.classList.remove('checking', 'success');
             field.classList.add('error');
             errorElement.textContent = 'This ID number is already in use. Please choose another.';

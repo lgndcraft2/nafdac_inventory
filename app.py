@@ -94,6 +94,8 @@ def api_register():
         data = request.json
         username = data.get('username')
         email = data.get('email')
+        unit = data.get('unit')
+        branch = data.get('branch')
         password_hash = data.get('password')
 
         if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
@@ -101,9 +103,9 @@ def api_register():
 
         hashed_password = generate_password_hash(password_hash)
         if User.query.count() == 0:
-            new_user = User(username=username, email=email, password_hash=hashed_password, roles='admin')
+            new_user = User(username=username, email=email, unit=unit, branch=branch, password_hash=hashed_password, roles='admin')
         else:
-            new_user = User(username=username, email=email, password_hash=hashed_password, roles='user')
+            new_user = User(username=username, email=email, unit=unit, branch=branch, password_hash=hashed_password, roles='user')
         db.session.add(new_user)
         db.session.commit()
         return jsonify({"message": "User registered successfully"}), 201
@@ -333,7 +335,7 @@ def update_user_role(user_id):
     data = request.get_json()
     new_role = data.get('role')
 
-    if not new_role or new_role not in ['admin', 'user']:
+    if not new_role or new_role not in ['admin', 'user', 'hou']:
         return jsonify({"error": "Invalid role"}), 400
 
     user.roles = new_role
@@ -383,6 +385,7 @@ def send_due_maintenance_notifications():
             Equipment.next_calibration_date <= upcoming_date
         ).all()
 
+        
         if due_equipments:
             user = User.query.first()
             if not user:
@@ -430,6 +433,6 @@ def send_due_maintenance_notifications():
 if __name__ == "__main__":
     scheduler = BackgroundScheduler()
     scheduler.add_job(func=send_due_maintenance_notifications, trigger="interval", seconds=10, max_instances=3, coalesce=True)
-    scheduler.start()
+    #scheduler.start()
     atexit.register(lambda: scheduler.shutdown(wait=False))
     app.run(host="0.0.0.0", use_reloader=False, debug=False)
