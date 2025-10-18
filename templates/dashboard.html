@@ -46,18 +46,26 @@
                     <option value="Unknown">Unknown</option>
                 </select>
             </div>
-
             <div class="filter-group">
-                <label for="location-filter" class="filter-label">
+                <label for="branch-filter" class="filter-label">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    Location
+                    </svg>  
+                    Branch
                 </label>
-                <select id="location-filter" class="filter-select">
-                    <option value="all">All Locations</option>
-                    <!-- Locations will be populated dynamically -->
+                <select id="branch-filter" class="filter-select">
+                    <option value="all">All Branches</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="unit-filter" class="filter-label">
+                    Unit
+                </label>
+                <select id="unit-filter" class="filter-select">
+                    <option value="all">All Units</option>
                 </select>
             </div>
 

@@ -28,6 +28,8 @@ class RegistrationForm {
     init() {
         this.form.addEventListener('submit', this.handleSubmit.bind(this));
         
+        this.fields.branch.addEventListener('change', this.handleBranchChange.bind(this));
+
         // Real-time validation
         Object.keys(this.fields).forEach(field => {
             this.fields[field].addEventListener('blur', () => this.validateField(field));
@@ -144,6 +146,24 @@ class RegistrationForm {
         return isValid;
     }
 
+    handleBranchChange() {
+        const selectedBranchId = this.fields.branch.value;
+        const unitOptions = this.fields.unit.querySelectorAll('option');
+
+        // Reset the unit dropdown to its placeholder
+        this.fields.unit.value = '';
+
+        // Loop through all possible unit options
+        unitOptions.forEach(option => {
+            // Show the option if its 'data-branch' matches the selected branch, or if it's the placeholder
+            if (option.dataset.branch === selectedBranchId || !option.value) {
+                option.style.display = 'block';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+    }
+
     async handleSubmit(e) {
         e.preventDefault();
 
@@ -158,7 +178,6 @@ class RegistrationForm {
             username: this.fields.username.value.trim(),
             email: this.fields.email.value.trim(),
             unit: this.fields.unit.value.trim(),
-            branch: this.fields.branch.value.trim(),
             password: this.fields.password.value,
             roles: 'user' // Default role as per your model
         };

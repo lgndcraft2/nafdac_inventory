@@ -19,7 +19,9 @@
         <!-- Navigation Links -->
         <ul class="nav-links">
             <li><a href="/dashboard" class="active">Dashboard</a></li>
-            <li><a href="/addEquipment">Add Equipment</a></li>
+            {% if user.roles == "admin" %}
+                <li><a href="/addEquipment">Add Equipment</a></li>
+            {% endif %}
         </ul>
 
         <!-- Mobile Menu Button -->
@@ -39,7 +41,7 @@
                 </svg>
             </button>
             <div class="dropdown-menu" id="dropdownMenu">
-                <a href="#">Profile</a>
+                <a href="/profile">Profile</a>
                 {% if user.roles == "admin" %}
                 <a href="/admin">Admin</a>
                 {% endif %}

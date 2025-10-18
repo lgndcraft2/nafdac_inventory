@@ -31,24 +31,25 @@
             </div>
 
             <div class="form-group">
-                <label for="unit">Unit</label>
-                <select name="unit" id="unit" required>
-                    <option value="">Select Unit</option>
-                    <option value="TIC">TIC</option>
-                    <option value="CHM">CHM</option>
-                    <option value="BIO">BIO</option>
-                </select>
-                <div class="error-message" id="unitError"></div>
-            </div>
-
-            <div class="form-group">
                 <label for="branch">Branch</label>
                 <select name="branch" id="branch" required>
                     <option value="">Select Branch</option>
-                    <option value="Yaba">Yaba</option>
-                    <option value="Isolo">Isolo</option>
+                    {% for branch in branches %}
+                    <option value="{{ branch.id }}">{{ branch.name }}</option>
+                    {% endfor %}
                 </select>
                 <div class="error-message" id="branchError"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="unit">Unit</label>
+                <select name="unit" id="unit" required>
+                    <option value="">Select Unit</option>
+                    {% for unit in units %}
+                        <option value="{{ unit.id }}" data-branch="{{ unit.branch_id }}" style="display: none;">{{ unit.name }}</option>
+                    {% endfor %}
+                </select>
+                <div class="error-message" id="unitError"></div>
             </div>
 
             <div class="form-group">

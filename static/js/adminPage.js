@@ -1,56 +1,74 @@
-// Function to format date
+// adminPage.js - NEW VERSION
+
+// --- Global variables ---
+let allUsers = [];
+let allUnits = [];
+let selectedUserId = null;
+
+// --- Helper Functions ---
 function formatDate(dateString) {
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
     });
 }
 
-// Function to get role class for badge
 function getRoleClass(role) {
-    switch(role.toLowerCase()) {
+    switch (role.toLowerCase()) {
         case 'admin': return 'role-admin';
+        case 'hou': return 'role-hou';
         default: return 'role-user';
     }
 }
 
-let users = [];
-
-// Function to update user counts
-function updateUserCounts() {
-    const normalUsers = users.filter(user => user.roles.toLowerCase() === 'user').length;
-    const admins = users.filter(user => user.roles.toLowerCase() === 'admin').length;
-
-    document.getElementById('normal-users-count').textContent = normalUsers;
-    document.getElementById('admins-count').textContent = admins;
+// --- Data Fetching ---
+async function fetchData() {
+    try {
+        const [usersResponse, unitsResponse] = await Promise.all([
+            fetch('/api/admin/users'),
+            fetch('/api/units')
+        ]);
+        if (!usersResponse.ok || !unitsResponse.ok) throw new Error('Failed to fetch data.');
+        
+        allUsers = await usersResponse.json();
+        allUnits = await unitsResponse.json();
+        
+        updateUserCounts();
+        renderUsersTable();
+    } catch (error) {
+        console.error("Fetch Error:", error);
+        // Display an error message to the user
+    }
 }
 
-// Function to render users table
-function renderUsersTable(usersToRender = users) {
+// --- UI Rendering ---
+function updateUserCounts() {
+    const userCount = allUsers.filter(u => u.roles === 'user').length;
+    const adminCount = allUsers.filter(u => u.roles === 'admin').length;
+    const houCount = allUsers.filter(u => u.roles === 'hou').length;
+    
+    document.getElementById('normal-users-count').textContent = userCount + houCount; // HOUs are also users
+    document.getElementById('admins-count').textContent = adminCount;
+}
+
+function renderUsersTable(usersToRender = allUsers) {
     const tbody = document.getElementById('users-tbody');
-    tbody.innerHTML = '';
+    tbody.innerHTML = ''; // Clear existing rows
 
     usersToRender.forEach(user => {
         const row = document.createElement('tr');
-        const currentRole = user.roles.toLowerCase();
-        const nextRole = currentRole === 'admin' ? 'user' : 'admin';
-        
         row.innerHTML = `
             <td>${user.id}</td>
             <td>${user.username}</td>
             <td>${user.email}</td>
-            <td><span class="role-badge ${getRoleClass(user.roles)}">${user.roles}</span></td>
+            <td><span class="role-badge ${getRoleClass(user.roles)}">${user.roles.toUpperCase()}</span></td>
             <td class="date-cell">${formatDate(user.created_at)}</td>
             <td>
                 <div class="action-buttons">
-                    <button class="delete-btn" onclick="deleteUser(${user.id})">Delete User</button>
-                    <button class="toggle-role-btn" onclick="toggleRole(${user.id})" data-next-role="${nextRole}">
-                        Switch to ${nextRole.charAt(0).toUpperCase() + nextRole.slice(1)}
-                    </button>
+                    <button class="change-role-btn" onclick="openRoleModal(${user.id})">Change Role</button>
+                    <button class="delete-btn" onclick="deleteUser(${user.id})">Delete</button>
                 </div>
             </td>
         `;
@@ -58,64 +76,125 @@ function renderUsersTable(usersToRender = users) {
     });
 }
 
-async function fetchUsers() {
-    const response = await fetch('/api/admin/users');
-    if (response.ok) {
-        console.log('Fetched users successfully');
-        console.log(response);
-        users = await response.json();
-        renderUsersTable(users);
-        updateUserCounts();
-    } else {
-        console.error('Failed to fetch users');
+// --- Modal Logic ---
+const modal = document.getElementById('role-modal');
+const roleSelect = document.getElementById('role-select');
+const unitSelectGroup = document.getElementById('unit-select-group');
+const unitSelect = document.getElementById('unit-select');
+
+function openRoleModal(userId) {
+    selectedUserId = userId;
+    const user = allUsers.find(u => u.id === userId);
+    if (!user) return;
+
+    document.getElementById('modal-username').textContent = user.username;
+    roleSelect.value = user.roles;
+    
+    // Show/hide unit dropdown based on selected role
+    unitSelectGroup.style.display = user.roles === 'hou' ? 'block' : 'none';
+
+    // Populate the unit dropdown with only units that are available or assigned to this user
+    populateUnitSelect(user.id);
+
+    modal.style.display = 'flex';
+}
+
+function populateUnitSelect(currentUserId) {
+    unitSelect.innerHTML = '<option value="">-- Select a Unit --</option>';
+    
+    const currentUserUnit = allUnits.find(u => u.hou_id === currentUserId);
+    
+    allUnits.forEach(unit => {
+        // A unit is available if it has no HOU, OR if the HOU is the current user
+        const isAvailable = unit.hou_id === null || unit.hou_id === currentUserId;
+        if (isAvailable) {
+            const option = document.createElement('option');
+            option.value = unit.id;
+            option.textContent = `${unit.name} (${unit.branch_name})`;
+            
+            // Pre-select the unit if it's the one this user is HOU of
+            if (currentUserUnit && currentUserUnit.id === unit.id) {
+                option.selected = true;
+            }
+            
+            unitSelect.appendChild(option);
+        }
+    });
+}
+
+function closeModal() {
+    modal.style.display = 'none';
+    selectedUserId = null;
+}
+
+// --- API Actions ---
+async function deleteUser(userId) {
+    if (confirm(`Are you sure you want to delete user ID ${userId}? This cannot be undone.`)) {
+        try {
+            const response = await fetch(`/api/admin/delete_user/${userId}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Server responded with an error.');
+            await fetchData(); // Refresh data from server
+        } catch (error) {
+            console.error("Delete Error:", error);
+            alert("Failed to delete user.");
+        }
     }
 }
 
-// Function to delete user
-function deleteUser(userId) {
-    if (confirm('Are you sure you want to delete this user?')) {
-        response = fetch(`/api/admin/delete_user/${userId}`, {
-            method: 'DELETE'
-        });
-        fetchUsers();
-        updateUserCounts();
-    }
-}
+async function saveRoleChange() {
+    if (!selectedUserId) return;
 
-// Function to toggle user role
-function toggleRole(userId) {
-    const user = users.find(u => u.id === userId);
-    if (user) {
-        const currentRole = user.roles.toLowerCase();
-        const newRole = currentRole === 'admin' ? 'user' : 'admin';
-        user.roles = newRole;
-        renderUsersTable();
-        updateUserCounts();
-        console.log(`User ${userId} role changed to ${newRole}`);
-        
-        //Optional: Add API call here to persist the change
-        fetch(`/api/admin/update_role/${userId}`, {
+    const newRole = roleSelect.value;
+    const unitId = unitSelect.value;
+
+    if (newRole === 'hou' && !unitId) {
+        alert('Please select a unit to assign the HOU to.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/admin/update_role/${selectedUserId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ role: newRole })
+            body: JSON.stringify({ role: newRole, unit_id: unitId })
         });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.error || 'Failed to update role.');
+        }
+        
+        closeModal();
+        await fetchData(); // Refresh data from server
+        
+    } catch (error) {
+        console.error("Update Role Error:", error);
+        alert(`Error: ${error.message}`);
     }
 }
 
-// Search functionality
-document.getElementById('search-input').addEventListener('input', function(e) {
-    const searchTerm = e.target.value.toLowerCase();
-    const filteredUsers = users.filter(user => 
-        user.username.toLowerCase().includes(searchTerm) ||
-        user.email.toLowerCase().includes(searchTerm) ||
-        user.roles.toLowerCase().includes(searchTerm)
-    );
-    renderUsersTable(filteredUsers);
-});
+// --- Event Listeners ---
+document.addEventListener('DOMContentLoaded', () => {
+    fetchData();
 
-// Initialize the dashboard
-document.addEventListener('DOMContentLoaded', function() {
-    fetchUsers();
-    updateUserCounts();
-    renderUsersTable();
+    // Modal event listeners
+    modal.querySelector('.close-button').addEventListener('click', closeModal);
+    modal.querySelector('.cancel').addEventListener('click', closeModal);
+    document.getElementById('save-role-button').addEventListener('click', saveRoleChange);
+    
+    roleSelect.addEventListener('change', () => {
+        unitSelectGroup.style.display = roleSelect.value === 'hou' ? 'block' : 'none';
+    });
+
+    // Search functionality
+    document.getElementById('search-input').addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const filteredUsers = allUsers.filter(user =>
+            user.username.toLowerCase().includes(searchTerm) ||
+            user.email.toLowerCase().includes(searchTerm) ||
+            user.roles.toLowerCase().includes(searchTerm)
+        );
+        renderUsersTable(filteredUsers);
+    });
 });

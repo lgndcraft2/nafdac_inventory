@@ -98,7 +98,7 @@ async function markCalibrated(equipmentId) {
     if (response.ok) {
         window.location.reload();
     } else{
-        alert("Failed to mark alibration as completed");
+        alert("Failed to mark calibration as completed");
     }
 }
 

@@ -9,7 +9,8 @@ class UpdateEquipmentFormValidator {
             model: this.form.querySelector('input[name="model"]'),
             serial_number: this.form.querySelector('input[name="serial_number"]'),
             new_id_number: this.form.querySelector('input[name="new_id_number"]'),
-            location: this.form.querySelector('input[name="location"]'),
+            branch: this.form.querySelector('select[name="branch"]'),
+            unit_id: this.form.querySelector('select[name="unit_id"]'),
             calibration_date: this.form.querySelector('input[name="calibration_date"]'),
             maintenance_date: this.form.querySelector('input[name="maintenance_date"]'),
             calibration_frequency: this.form.querySelector('select[name="calibration_frequency"]'),
@@ -37,6 +38,9 @@ class UpdateEquipmentFormValidator {
     init() {
         this.form.addEventListener('submit', this.handleSubmit.bind(this));
         this.addParameterBtn.addEventListener('click', this.addParameter.bind(this));
+        this.fields.branch.addEventListener('change', this.handleBranchChange.bind(this));
+        
+        this.handleBranchChange();
         
         Object.keys(this.fields).forEach(fieldName => {
             const field = this.fields[fieldName];
@@ -66,6 +70,28 @@ class UpdateEquipmentFormValidator {
             nameInput.addEventListener('input', () => this.updateParametersData());
             valueInput.addEventListener('input', () => this.updateParametersData());
         });
+    }
+
+    handleBranchChange() {
+        const selectedBranchId = this.fields.branch.value;
+        const unitSelect = this.fields.unit_id;
+        const unitOptions = unitSelect.querySelectorAll('option');
+
+        // Show/hide unit options based on the selected branch
+        unitOptions.forEach(option => {
+            // Show the option if its 'data-branch' matches or if it's a placeholder
+            if (option.dataset.branch === selectedBranchId || !option.value) {
+                option.style.display = 'block';
+            } else {
+                // Hide the option but keep it in the DOM
+                option.style.display = 'none';
+            }
+        });
+
+        // If the currently selected unit is now hidden, reset the dropdown
+        if (unitSelect.options[unitSelect.selectedIndex]?.style.display === 'none') {
+            unitSelect.value = '';
+        }
     }
 
      addParameter() {
@@ -299,7 +325,9 @@ class UpdateEquipmentFormValidator {
 
             const formData = {}
             Object.keys(this.fields).forEach(fieldName => {
-                formData[fieldName] = this.fields[fieldName].value.trim();
+                if (fieldName !== 'branch') {
+                    formData[fieldName] = this.fields[fieldName].value.trim();
+                }
             });
             formData.parameters = this.parameters;
 

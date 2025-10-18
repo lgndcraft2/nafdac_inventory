@@ -7,7 +7,7 @@ function createTableRow(item, index) {
         <tr class="fade-in">
             <td class="sn-column">${String(index + 1).padStart(2, '0')}</td>
             <td class="name-column">${item.name}</td>
-            <td class="location-column">${item.location}</td>
+            <td class="location-column">${item.branch_name}</td>
             <td class="date-column">${formatDate(item.next_calibration_date)}</td>
             <td class="cal_status-column">${getcal_statusBadge(item.cal_status)}</td>
             <td class="action-column">
@@ -62,7 +62,8 @@ function createEmptyState() {
 function filterAndSearchEquipment() {
     const searchTerm = document.getElementById('search-input').value.toLowerCase();
     const statusFilter = document.getElementById('status-filter').value;
-    const locationFilter = document.getElementById('location-filter').value;
+    const branchFilter = document.getElementById('branch-filter').value;
+    const unitFilter = document.getElementById('unit-filter').value;
 
     let filteredData = allEquipmentData;
 
@@ -70,7 +71,7 @@ function filterAndSearchEquipment() {
     if (searchTerm) {
         filteredData = filteredData.filter(item => 
             item.name.toLowerCase().includes(searchTerm) ||
-            item.location.toLowerCase().includes(searchTerm) ||
+            item.branch_name.toLowerCase().includes(searchTerm) ||
             item.serial_number.toLowerCase().includes(searchTerm)
         );
     }
@@ -80,9 +81,14 @@ function filterAndSearchEquipment() {
         filteredData = filteredData.filter(item => item.cal_status === statusFilter);
     }
 
-    // Apply location filter
-    if (locationFilter && locationFilter !== 'all') {
-        filteredData = filteredData.filter(item => item.location === locationFilter);
+    // Apply Branch filter
+    if (branchFilter && branchFilter !== 'all') {
+        filteredData = filteredData.filter(item => item.branch_id == branchFilter);
+    }
+
+    // Apply Unit filter
+    if (unitFilter && unitFilter !== 'all') {
+        filteredData = filteredData.filter(item => item.unit_id == unitFilter);
     }
 
     // Update the table with filtered data
@@ -118,20 +124,40 @@ function updateResultsCount(filtered, total) {
     }
 }
 
-// Populate location filter dropdown
-function populateLocationFilter() {
-    const locations = [...new Set(allEquipmentData.map(item => item.location))].sort();
-    const locationFilter = document.getElementById('location-filter');
-    
-    // Clear existing options except "All Locations"
-    locationFilter.innerHTML = '<option value="all">All Locations</option>';
-    
-    // Add location options
-    locations.forEach(location => {
+function populateFilters() {
+    // Populate Branches
+    const branches = [...new Map(allEquipmentData.map(item => [item.branch_id, {id: item.branch_id, name: item.branch_name}])).values()];
+    const branchFilter = document.getElementById('branch-filter');
+    branchFilter.innerHTML = '<option value="all">All Branches</option>';
+    branches.forEach(branch => {
         const option = document.createElement('option');
-        option.value = location;
-        option.textContent = location;
-        locationFilter.appendChild(option);
+        option.value = branch.id;
+        option.textContent = branch.name;
+        branchFilter.appendChild(option);
+    });
+
+    // Initially populate all units
+    handleBranchChange();
+}
+
+function handleBranchChange() {
+    const selectedBranchId = document.getElementById('branch-filter').value;
+    const unitFilter = document.getElementById('unit-filter');
+    
+    // Get all unique units
+    let units = [...new Map(allEquipmentData.map(item => [item.unit_id, {id: item.unit_id, name: item.unit_name, branch_id: item.branch_id}])).values()];
+
+    // Filter units based on the selected branch
+    if (selectedBranchId && selectedBranchId !== 'all') {
+        units = units.filter(unit => unit.branch_id == selectedBranchId);
+    }
+
+    unitFilter.innerHTML = '<option value="all">All Units</option>';
+    units.forEach(unit => {
+        const option = document.createElement('option');
+        option.value = unit.id;
+        option.textContent = unit.name;
+        unitFilter.appendChild(option);
     });
 }
 
@@ -139,7 +165,9 @@ function populateLocationFilter() {
 function clearFilters() {
     document.getElementById('search-input').value = '';
     document.getElementById('status-filter').value = 'all';
-    document.getElementById('location-filter').value = 'all';
+    document.getElementById('branch-filter').value = 'all';
+    handleBranchChange(); // Update unit dropdown
+    document.getElementById('unit-filter').value = 'all';
     filterAndSearchEquipment();
 }
 
@@ -149,7 +177,7 @@ function renderTable() {
         .then(response => response.json())
         .then(data => {
             allEquipmentData = data;
-            populateLocationFilter();
+            populateFilters(); 
             updateTable(allEquipmentData);
             updateResultsCount(allEquipmentData.length, allEquipmentData.length);
         })
@@ -172,7 +200,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add event listeners for search and filters
     const searchInput = document.getElementById('search-input');
     const statusFilter = document.getElementById('status-filter');
-    const locationFilter = document.getElementById('location-filter');
+    const branchFilter = document.getElementById('branch-filter');
+    const unitFilter = document.getElementById('unit-filter');
     const clearBtn = document.getElementById('clear-filters');
 
     if (searchInput) {
@@ -183,9 +212,13 @@ document.addEventListener('DOMContentLoaded', function() {
         statusFilter.addEventListener('change', filterAndSearchEquipment);
     }
 
-    if (locationFilter) {
-        locationFilter.addEventListener('change', filterAndSearchEquipment);
+    if (branchFilter) {
+        branchFilter.addEventListener('change', () => {
+            handleBranchChange(); // Update units when branch changes
+            filterAndSearchEquipment(); // Re-filter the main table
+        });
     }
+    if (unitFilter) unitFilter.addEventListener('change', filterAndSearchEquipment);
 
     if (clearBtn) {
         clearBtn.addEventListener('click', clearFilters);

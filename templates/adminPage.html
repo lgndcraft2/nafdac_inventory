@@ -52,5 +52,33 @@
         </div>
     </div>
 </div>
+<div id="role-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span class="close-button">&times;</span>
+            <h2>Change Role for <span id="modal-username"></span></h2>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="role-select">Select New Role:</label>
+                <select id="role-select">
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="hou">Head of Unit (HOU)</option>
+                </select>
+            </div>
+            <div class="form-group" id="unit-select-group" style="display:none;">
+                <label for="unit-select">Assign to Unit:</label>
+                <select id="unit-select">
+                </select>
+                <small id="unit-warning" style="color: #e74c3c; display: none;">This unit already has an HOU.</small>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="save-role-button" class="modal-button save">Save Changes</button>
+            <button class="modal-button cancel">Cancel</button>
+        </div>
+    </div>
+</div>
 <script src="{{ url_for('static', filename='js/adminPage.js') }}"></script>
 {% endblock %}

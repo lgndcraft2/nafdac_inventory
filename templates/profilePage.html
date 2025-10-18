@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Profile - {{user.username}} {% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profilePage.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+
+    <header class="welcome-header">
+        <h1>Welcome back, {{ current_user.username }}!</h1>
+        <p>Here is a summary of your information and assigned equipment.</p>
+    </header>
+
+    <section class="info-grid">
+        <div class="info-card">
+            <h2>Your Profile</h2>
+            <div class="info-item">
+                <span class="label">Username:</span>
+                <span class="value">{{ current_user.username }}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Email:</span>
+                <span class="value">{{ current_user.email }}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Role:</span>
+                <span class="value">{{ current_user.roles.title() }}</span>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h2>Your Assignment</h2>
+            {% if current_user.unit %}
+            <div class="info-item">
+                <span class="label">Branch:</span>
+                <span class="value">{{ current_user.unit.branch.name }}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Unit:</span>
+                <span class="value">{{ current_user.unit.name }}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Branch Address:</span>
+                <span class="value">{{ current_user.unit.branch.address }}</span>
+            </div>
+            {% else %}
+            <p>You are not currently assigned to a unit.</p>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}

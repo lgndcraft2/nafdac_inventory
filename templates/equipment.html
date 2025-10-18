@@ -97,7 +97,7 @@
                 </div>
                 <div class="info-item">
                     <span class="info-label">Location</span>
-                    <p class="info-value highlight">{{ equipment.location }}</p>
+                    <p class="info-value highlight">{{equipment.unit.name}}, {{ equipment.unit.branch.name }}</p>
                 </div>
             </div>
 
@@ -148,7 +148,7 @@
         </div>
         {% endif %}
 
- {% if user.roles == "admin" %}
+    {% if user.roles == "admin" %}
         <!-- Action Buttons -->
         <div class="buttons">
             <button class="action-button action-delete" onclick="openModal()">
@@ -167,7 +167,8 @@
                 </svg>
                 <span>Edit</span>
             </button>
-{% endif %}
+    {% endif %}
+    {% if user.roles in ["admin", "hou"] %}
             <button class="action-button action-calibrated" onclick="openCalibrationModal()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -184,6 +185,7 @@
                 <span>Maintained</span>
             </button>
         </div>
+    {% endif %}
     </main>
 
     <!-- Footer -->

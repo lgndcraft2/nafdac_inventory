@@ -39,11 +39,30 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <input type="text" name="location" placeholder="Location" required>
-                <div class="error-message" id="location-error">Please enter a valid location</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="branch">Branch</label>
+                    <select name="branch" id="branch" required>
+                        <option value="">-- Select a Branch --</option>
+                        {% for branch in branches %}
+                        <option value="{{ branch.id }}">{{ branch.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="error-message" id="branch-error">Please select a branch</div>
+                </div>
+                <div class="form-group">
+                    <label for="unit_id">Unit</label>
+                    <select name="unit_id" id="unit_id" required>
+                        <option value="">-- Select Branch First --</option>
+                        {% for unit in units %}
+                        <option value="{{ unit.id }}" data-branch="{{ unit.branch_id }}" style="display: none;">{{ unit.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="error-message" id="unit_id-error">Please select a unit</div>
+                </div>
             </div>
-
+            
             <div class="form-row">
                 <div class="form-group">
                     <label for="calibration_date">Calibration Date:</label>

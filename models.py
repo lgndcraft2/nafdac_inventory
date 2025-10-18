@@ -4,18 +4,20 @@ from sqlalchemy import event
 from werkzeug.security import generate_password_hash, check_password_hash
 from dateutil.relativedelta import relativedelta
 from flask_login import UserMixin
-from .extensions import db
+from extensions import db
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
-    roles = db.Column(db.String(50), nullable=False)  # e.g., 'admin', 'user', 'HOU's'
-    unit = db.Column(db.String(50), nullable=False)  # e.g., 'TIC', 'CHM', 'BIO'
-    branch = db.Column(db.String(50), nullable=False)  # e.g., 'Yaba', 'Isolo'
+    roles = db.Column(db.String(50), nullable=False)  # e.g., 'admin', 'user', 'HOU's
     password_hash = db.Column(db.String(256), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    unit_id = db.Column(db.Integer, db.ForeignKey('unit.id'))
+
+    unit = db.relationship('Unit', foreign_keys=[unit_id], backref='users')
+    
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
@@ -24,7 +26,26 @@ class User(UserMixin, db.Model):
 
     def __repr__(self):
         return f'<User {self.username}>'
-    
+
+class Unit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=False)
+    branch_id = db.Column(db.Integer, db.ForeignKey('branch.id'), nullable=False)
+    hou_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    hou = db.relationship('User', foreign_keys=[hou_id], backref=db.backref('headed_units', lazy=True))
+
+    def __repr__(self):
+        return f'<Unit {self.name}>'
+
+class Branch(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    address = db.Column(db.String(150), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    units = db.relationship('Unit', backref='branch', lazy=True)
+
 class Equipment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
@@ -32,7 +53,9 @@ class Equipment(db.Model):
     model = db.Column(db.String(150))
     serial_number = db.Column(db.String(150))
     new_id_number = db.Column(db.String(150), unique=True)
-    location = db.Column(db.String(150))
+
+    unit_id = db.Column(db.Integer, db.ForeignKey('unit.id'), nullable=False)
+    unit = db.relationship('Unit', backref=db.backref('equipments', lazy=True))
 
     calibration_frequency = db.Column(db.String(100), default='Annual')
     calibration_date = db.Column(db.Date)
@@ -105,7 +128,10 @@ class Equipment(db.Model):
             "model": self.model,
             "serial_number": self.serial_number,
             "new_id_number": self.new_id_number,
-            "location": self.location,
+            "unit_id": self.unit.id,
+            "unit_name": self.unit.name,
+            "branch_id": self.unit.branch.id,
+            "branch_name": self.unit.branch.name,
             "calibration_frequency": self.calibration_frequency,
             "calibration_date": str(self.calibration_date) if self.calibration_date else None,
             "next_calibration_date": str(self.next_calibration_date) if self.next_calibration_date else None,

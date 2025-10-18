@@ -7,7 +7,8 @@ class EquipmentFormValidator {
             model: this.form.querySelector('input[name="model"]'),
             serial_number: this.form.querySelector('input[name="serial_number"]'),
             new_id_number: this.form.querySelector('input[name="new_id_number"]'),
-            location: this.form.querySelector('input[name="location"]'),
+            branch: this.form.querySelector('select[name="branch"]'),
+            unit_id: this.form.querySelector('select[name="unit_id"]'),
             calibration_date: this.form.querySelector('input[name="calibration_date"]'),
             maintenance_date: this.form.querySelector('input[name="maintenance_date"]'),
             calibration_frequency: this.form.querySelector('select[name="calibration_frequency"]'),
@@ -33,6 +34,7 @@ class EquipmentFormValidator {
     init() {
         this.form.addEventListener('submit', this.handleSubmit.bind(this));
         this.addParameterBtn.addEventListener('click', this.addParameter.bind(this));
+        this.fields.branch.addEventListener('change', this.handleBranchChange.bind(this));
 
         Object.keys(this.fields).forEach(fieldName => {
             const field = this.fields[fieldName];
@@ -259,6 +261,25 @@ class EquipmentFormValidator {
         return isFormValid;
     }
 
+    handleBranchChange() {
+        const selectedBranchId = this.fields.branch.value;
+        const unitSelect = this.fields.unit_id;
+        // Query all possible unit options that were rendered in the HTML
+        const unitOptions = unitSelect.querySelectorAll('option');
+
+        // Reset the unit dropdown to its placeholder
+        unitSelect.value = '';
+
+        unitOptions.forEach(option => {
+            // Show the option if its 'data-branch' matches the selected branch, or if it's the placeholder
+            if (option.dataset.branch === selectedBranchId || !option.value) {
+                option.style.display = 'block';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+    }
+
     async handleSubmit(e) {
         e.preventDefault();
         this.successMessage.classList.remove('show');
@@ -280,7 +301,9 @@ class EquipmentFormValidator {
 
             const formData = {}
             Object.keys(this.fields).forEach(fieldName => {
-                formData[fieldName] = this.fields[fieldName].value.trim();
+                if (fieldName !== 'branch') {
+                    formData[fieldName] = this.fields[fieldName].value.trim();
+                }
             });
             formData.parameters = this.parameters;
 
@@ -307,6 +330,7 @@ class EquipmentFormValidator {
             });
 
         } else {
+            console.log('Form validation failed');
             const firstError = this.form.querySelector('.error');
             if (firstError) {
                 firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });

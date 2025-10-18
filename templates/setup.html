@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}System Setup{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+<style>
+    *{
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    .container {
+        max-width: 600px;
+    }
+    .header h1 {
+        font-size: 1.8rem;
+    }
+    .form-section {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .form-section h2 {
+        margin-top: 0;
+        font-size: 1.2rem;
+        color: #555;
+    }
+    .or-divider {
+        text-align: center;
+        margin: 1rem 0;
+        font-weight: bold;
+        color: #999;
+    }
+    /* Style for disabled fields */
+    .disabled-group input {
+        background-color: #f1f1f1;
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>System Setup</h1>
+        <p>Create new branches and units.</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="error-banner" style="display: block; background-color: {{ '#28a745' if category == 'success' else '#dc3545' }};">
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('setup_branch') }}">
+        <div class="form-section">
+            <h2>Step 1: Choose Branch</h2>
+            <div class="form-group">
+                <label for="existing_branch">Add Unit to Existing Branch</label>
+                <select name="existing_branch" id="existing_branch">
+                    <option value="">-- Or Create a New Branch Below --</option>
+                    {% for branch in branches %}
+                    <option value="{{ branch.id }}">{{ branch.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="or-divider">OR</div>
+
+            <div id="new-branch-group">
+                <div class="form-group">
+                    <label for="branch_name">New Branch Name</label>
+                    <input type="text" id="branch_name" name="branch_name">
+                </div>
+                <div class="form-group">
+                    <label for="branch_address">New Branch Address</label>
+                    <input type="text" id="branch_address" name="branch_address">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>Step 2: Create New Unit</h2>
+            <div class="form-group">
+                <label for="unit_name">Unit Name</label>
+                <input type="text" id="unit_name" name="unit_name" required>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>Step 3: Authorize</h2>
+            <div class="form-group">
+                <label for="password">Setup Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+        </div>
+
+        <button type="submit" class="submit-btn">
+            <span class="btn-text">Submit</span>
+        </button>
+    </form>
+</div>
+
+<script>
+    document.getElementById('existing_branch').addEventListener('change', function() {
+        const newBranchGroup = document.getElementById('new-branch-group');
+        const branchNameInput = document.getElementById('branch_name');
+        const branchAddressInput = document.getElementById('branch_address');
+
+        if (this.value) {
+            // If an existing branch is selected, disable and clear new branch fields
+            newBranchGroup.classList.add('disabled-group');
+            branchNameInput.disabled = true;
+            branchAddressInput.disabled = true;
+            branchNameInput.required = false; // No longer required
+            branchAddressInput.required = false;
+        } else {
+            // If "-- Or Create New --" is selected, re-enable them
+            newBranchGroup.classList.remove('disabled-group');
+            branchNameInput.disabled = false;
+            branchAddressInput.disabled = false;
+            branchNameInput.required = true; // Make them required again
+            branchAddressInput.required = true;
+        }
+    });
+</script>
+{% endblock %}
