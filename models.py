@@ -31,9 +31,9 @@ class Unit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=False)
     branch_id = db.Column(db.Integer, db.ForeignKey('branch.id'), nullable=False)
-    #hou_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    hou_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-    #hou = db.relationship('User', foreign_keys=[hou_id], backref=db.backref('headed_units', lazy=True))
+    hou = db.relationship('User', foreign_keys=[hou_id], backref=db.backref('headed_units', lazy=True))
 
     def __repr__(self):
         return f'<Unit {self.name}>'
