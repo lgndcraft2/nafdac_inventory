@@ -18,7 +18,7 @@
         </div>
 
         <form id="registrationForm">
-            {{csrf_token()}}
+            <input id="csrf_token" name="csrf_token" type="hidden" value={{csrf_token()}}>
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" required>

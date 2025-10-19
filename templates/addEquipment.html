@@ -11,7 +11,7 @@
     </div>
 
     <form id="equipmentForm">
-        {{csrf_token()}}
+        <input id="csrf_token" name="csrf_token" type="hidden" value={{csrf_token()}}>
         <div class="form-grid">
             <div class="form-group">
                 <input type="text" name="name" placeholder="Equipment Name" required>
