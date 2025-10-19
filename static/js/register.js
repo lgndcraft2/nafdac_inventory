@@ -21,7 +21,7 @@ class RegistrationForm {
             password: document.getElementById('passwordError'),
             confirmPassword: document.getElementById('confirmPasswordError')
         };
-
+        this.csrfToken = document.querySelector('input[name="csrf_token"]').value;
         this.init();
     }
 
@@ -187,7 +187,8 @@ class RegistrationForm {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'X-CSRF-Token': this.csrfToken
                 },
                 body: JSON.stringify(formData)
             });

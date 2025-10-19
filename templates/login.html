@@ -21,6 +21,7 @@
         </div>
 
         <form id="loginForm">
+            {{csrf_token()}}
             <div class="form-group">
                 <label for="login">Username or Email</label>
                 <input type="text" id="login" name="login" required autocomplete="username">

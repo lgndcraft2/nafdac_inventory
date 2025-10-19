@@ -18,6 +18,7 @@ class UpdateEquipmentFormValidator {
             quantity: this.form.querySelector('input[name="quantity"]'),
             description: this.form.querySelector('textarea[name="description"]')
         };
+        this.csrfToken = document.querySelector('input[name="csrf_token"]').value;
         this.submitBtn = this.form.querySelector('.submit-btn');
         this.successMessage = document.getElementById('success-message');
         this.validationTimeouts = {};
@@ -333,7 +334,10 @@ class UpdateEquipmentFormValidator {
 
             fetch(`/api/updateEquipment/${this.equipmentId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': this.csrfToken
+                },
                 body: JSON.stringify(formData)
             })
             .then(response => {

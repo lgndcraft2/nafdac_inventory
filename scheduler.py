@@ -8,17 +8,10 @@ def start_scheduler():
     scheduler.add_job(
         func=send_due_maintenance_notifications, 
         trigger="interval", 
-        seconds=30 # Run once a day in production
+        hours=4
     )
     scheduler.start()
     print("APScheduler started for production...")
-
-    # Keep the script running
-    try:
-        while True:
-            time.sleep(2)
-    except (KeyboardInterrupt, SystemExit):
-        scheduler.shutdown()
 
 if __name__ == "__main__":
     # The app context is crucial for the job to access the database

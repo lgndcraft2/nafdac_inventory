@@ -5,6 +5,7 @@ class LoginForm {
         this.errorBanner = document.getElementById('errorBanner');
         this.errorMessage = document.getElementById('errorMessage');
         this.successMessage = document.getElementById('successMessage');
+        this.csrfToken = document.querySelector('input[name="csrf_token"]').value;
         
         this.fields = {
             login: document.getElementById('login'),
@@ -142,7 +143,8 @@ class LoginForm {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'X-CSRF-Token': this.csrfToken
                 },
                 body: JSON.stringify(formData)
             });

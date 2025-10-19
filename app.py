@@ -11,7 +11,10 @@ import atexit
 from models import db, User, Equipment, EquipmentParameter, Unit, Branch
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
-#from flask_talisman import Talisman
+from flask_talisman import Talisman
+import logging
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 load_dotenv()
 
@@ -35,25 +38,31 @@ if uri.startswith("postgres://"):
 app.config["SQLALCHEMY_DATABASE_URI"] = uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 465
-app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = os.environ.get('MAIL_PORT', 465)
+app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS')
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')  # your email
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')  # app password
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
-app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL')
 
-# app.config['SESSION_COOKIE_SECURE'] = True
-# app.config['SESSION_COOKIE_HTTPONLY'] = True
-# app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['PREFERRED_URL_SCHEME'] = 'https'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 app.permanent_session_lifetime = timedelta(minutes=60)
 
 db.init_app(app)
 migrate = Migrate(app, db)
 
-#csrf = CSRFProtect(app)
-#Talisman(app, force_https=True, strict_transport_security=True)
+csrf = CSRFProtect(app)
+Talisman(app, force_https=True, strict_transport_security=True)
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["500 per day", "100 per hour"]
+)
 
 mail = Mail(app)
 
@@ -102,14 +111,35 @@ def register():
     return render_template('register.html', units=units, branches=branches)
 
 @app.route('/api/register', methods=['POST'])
+@limiter.limit("5 per minute")
 def api_register():
     if request.method == 'POST':
         data = request.json
+        errors = []
+
         username = data.get('username')
         email = data.get('email')
         unit_id = data.get('unit')
-        branch = data.get('branch')
         password_hash = data.get('password')
+
+        if not username or len(username.strip()) < 3:
+            errors.append("Username must be at least 3 characters long.")
+        elif len(username) > 50:
+            errors.append("Username must not exceed 50 characters.")
+
+        if not email or "@" not in email or "." not in email:
+            errors.append("Invalid email address.")
+        elif len(email) > 100:
+            errors.append("Email must not exceed 100 characters.")
+
+        if not password_hash or len(password_hash) < 6:
+            errors.append("Password must be at least 6 characters long.")
+
+        if not unit_id or not isinstance(unit_id, int):
+            errors.append("A valid unit must be selected.")
+
+        if errors:
+            return jsonify({"errors": errors}), 400
 
         if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
             return jsonify({"error": "Username or email already exists"}), 400
@@ -129,6 +159,7 @@ def login():
     return render_template('login.html')
 
 @app.route('/api/login', methods=['POST'])
+@limiter.limit("5 per minute")
 def api_login():
     if request.method == 'POST':
         data = request.json
@@ -245,50 +276,106 @@ def equipment_page(equipment_id):
     equipment = Equipment.query.get_or_404(equipment_id)
     return render_template('equipment.html', equipment=equipment)
 
-
 @app.route('/api/add_equipments', methods=['POST'])
 @login_required
 def add_equipment():
     data = request.json
-    parameters = data.get('parameters', [])
-    
-    calibration_date = (
-        datetime.strptime(data.get('calibration_date'), "%Y-%m-%d").date()
-        if data.get('calibration_date') else None
-    )
-    maintenance_date = (
-        datetime.strptime(data.get('maintenance_date'), "%Y-%m-%d").date()
-        if data.get('maintenance_date') else None
-    )
+    errors = {}
 
+    # --- 1. Validate Presence and Type ---
+    name = data.get('name')
+    unit_id = data.get('unit_id')
+    manufacturer = data.get('manufacturer')
+    model = data.get('model')
+    new_id_number = data.get('new_id_number')
+    quantity = data.get('quantity', 1) # Default to 1 if not provided
+    calibration_date_str = data.get('calibration_date')
+    maintenance_date_str = data.get('maintenance_date')
+
+    if not name or len(name.strip()) < 3:
+        errors['name'] = 'Equipment name is required and must be at least 3 characters.'
+
+    if not manufacturer or len(manufacturer.strip()) < 2:
+        errors['manufacturer'] = 'Manufacturer is required and must be at least 2 characters.'
+
+    if not model or len(model.strip()) < 1:
+        errors['model'] = 'Model is required.'
+
+    if not new_id_number or len(new_id_number.strip()) < 1:
+        errors['new_id_number'] = 'A unique ID Number is required.'
+
+    # --- 2. Validate Foreign Keys and Uniqueness ---
+    if unit_id:
+        if not isinstance(unit_id, int) or not Unit.query.get(unit_id):
+            errors['unit_id'] = 'A valid unit must be selected.'
+    else:
+        errors['unit_id'] = 'Unit is a required field.'
+
+    if new_id_number and Equipment.query.filter_by(new_id_number=new_id_number.strip()).first():
+        errors['new_id_number'] = f"An equipment with the ID '{new_id_number}' already exists."
+
+    # --- 3. Validate Dates and Numbers ---
+    calibration_date = None
+    if calibration_date_str:
+        try:
+            calibration_date = datetime.strptime(calibration_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            errors['calibration_date'] = 'Invalid date format. Please use YYYY-MM-DD.'
+    else:
+        errors['calibration_date'] = 'Calibration date is required.'
+
+    maintenance_date = None
+    if maintenance_date_str:
+        try:
+            maintenance_date = datetime.strptime(maintenance_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            errors['maintenance_date'] = 'Invalid date format. Please use YYYY-MM-DD.'
+    else:
+        errors['maintenance_date'] = 'Maintenance date is required.'
+        
+    try:
+        quantity = int(quantity)
+        if quantity < 1:
+            errors['quantity'] = 'Quantity must be at least 1.'
+    except (ValueError, TypeError):
+        errors['quantity'] = 'Quantity must be a valid number.'
+
+
+    # --- 4. Return Errors if Any Exist ---
+    if errors:
+        return jsonify({"message": "Validation failed", "errors": errors}), 400
+
+    # --- 5. Create Equipment if All Checks Pass ---
     new_equipment = Equipment(
-        name=data.get('name'),
-        manufacturer=data.get('manufacturer'),
-        model=data.get('model'),
-        serial_number=data.get('serial_number'),
-        new_id_number=data.get('new_id_number'),
-        unit_id=data.get('unit_id'),
+        name=name.strip(),
+        manufacturer=manufacturer.strip(),
+        model=model.strip(),
+        serial_number=data.get('serial_number', '').strip(),
+        new_id_number=new_id_number.strip(),
+        unit_id=unit_id,
         calibration_frequency=data.get('calibration_frequency'),
         calibration_date=calibration_date,
         maintenance_frequency=data.get('maintenance_frequency'),
         maintenance_date=maintenance_date,
-        description=data.get('description'),
-        quantity=data.get('quantity', 1)
+        description=data.get('description', '').strip(),
+        quantity=quantity
     )
     db.session.add(new_equipment)
-    db.session.flush()  # Get ID before committing
+    db.session.flush()  # Get the new_equipment.id before we commit
 
+    parameters = data.get('parameters', [])
     if parameters:
         for param in parameters:
-            name = param.get('name')
-            value = param.get('value')
-            if name or value:
-                new_parameters = EquipmentParameter(
+            param_name = param.get('name')
+            param_value = param.get('value')
+            if param_name and param_value: # Only add if both name and value are present
+                new_parameter = EquipmentParameter(
                     equipment_id=new_equipment.id,
-                    parameter_name=name,
-                    parameter_value=value
+                    parameter_name=param_name.strip(),
+                    parameter_value=param_value.strip()
                 )
-                db.session.add(new_parameters)
+                db.session.add(new_parameter)
+
     db.session.commit()
     return jsonify(new_equipment.to_dict()), 201
 
@@ -312,47 +399,88 @@ def update_equipment_page(equipment_id):
 def update_equipment(equipment_id):
     equipment = Equipment.query.get_or_404(equipment_id)
     data = request.json
+    errors = {}
 
-    equipment.name = data.get('name', equipment.name)
-    equipment.manufacturer = data.get('manufacturer', equipment.manufacturer)
-    equipment.model = data.get('model', equipment.model)
-    equipment.serial_number = data.get('serial_number', equipment.serial_number)
-    equipment.new_id_number = data.get('new_id_number', equipment.new_id_number)
-    equipment.unit_id = data.get('unit_id', equipment.unit_id)
+    # --- 1. Get new data from the request ---
+    name = data.get('name')
+    unit_id = data.get('unit_id')
+    manufacturer = data.get('manufacturer')
+    model = data.get('model')
+    new_id_number = data.get('new_id_number')
+    quantity = data.get('quantity')
+    calibration_date_str = data.get('calibration_date')
+    maintenance_date_str = data.get('maintenance_date')
+
+    # --- 2. Perform Validation ---
+    if name is not None and len(name.strip()) < 3:
+        errors['name'] = 'Equipment name must be at least 3 characters.'
+
+    if new_id_number:
+        # CRITICAL: Check for uniqueness, excluding the current equipment
+        existing_eq = Equipment.query.filter(
+            Equipment.new_id_number == new_id_number.strip(),
+            Equipment.id != equipment_id  # The key difference is here!
+        ).first()
+        if existing_eq:
+            errors['new_id_number'] = f"The ID '{new_id_number}' is already in use by another equipment."
+
+    if unit_id and not Unit.query.get(unit_id):
+        errors['unit_id'] = 'The selected unit does not exist.'
+
+    calibration_date = None
+    if calibration_date_str:
+        try:
+            calibration_date = datetime.strptime(calibration_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            errors['calibration_date'] = 'Invalid date format. Please use YYYY-MM-DD.'
+            
+    maintenance_date = None
+    if maintenance_date_str:
+        try:
+            maintenance_date = datetime.strptime(maintenance_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            errors['maintenance_date'] = 'Invalid date format. Please use YYYY-MM-DD.'
+
+    if quantity is not None:
+        try:
+            quantity = int(quantity)
+            if quantity < 1:
+                errors['quantity'] = 'Quantity must be at least 1.'
+        except (ValueError, TypeError):
+            errors['quantity'] = 'Quantity must be a valid number.'
+            
+    # --- 3. Return errors if validation failed ---
+    if errors:
+        return jsonify({"message": "Validation failed", "errors": errors}), 400
+
+    # --- 4. Update the equipment object if validation passes ---
+    equipment.name = name.strip() if name is not None else equipment.name
+    equipment.manufacturer = data.get('manufacturer', equipment.manufacturer).strip()
+    equipment.model = data.get('model', equipment.model).strip()
+    equipment.serial_number = data.get('serial_number', equipment.serial_number).strip()
+    equipment.new_id_number = new_id_number.strip() if new_id_number is not None else equipment.new_id_number
+    equipment.unit_id = unit_id if unit_id is not None else equipment.unit_id
     equipment.calibration_frequency = data.get('calibration_frequency', equipment.calibration_frequency)
     equipment.maintenance_frequency = data.get('maintenance_frequency', equipment.maintenance_frequency)
-    equipment.description = data.get('description', equipment.description)
-    equipment.quantity = data.get('quantity', equipment.quantity)
+    equipment.description = data.get('description', equipment.description).strip()
+    equipment.quantity = quantity if quantity is not None else equipment.quantity
+    
+    if calibration_date:
+        equipment.calibration_date = calibration_date
+    if maintenance_date:
+        equipment.maintenance_date = maintenance_date
 
-     #Convert calibration_date if provided
-    cal_date = data.get('calibration_date')
-    if cal_date:
-        equipment.calibration_date = datetime.strptime(cal_date, "%Y-%m-%d").date()
-
-    #Convert maintenance_date if provided
-    mnt_date = data.get('maintenance_date')
-    if mnt_date:
-        equipment.maintenance_date = datetime.strptime(mnt_date, "%Y-%m-%d").date()
-
-    equipment.set_next_calibration_date()
-    equipment.set_next_maintenance_date()
-
-    new_parameters = data.get('parameters', [])
-    print(new_parameters)
+    # Delete old parameters and add new ones
     EquipmentParameter.query.filter_by(equipment_id=equipment.id).delete()
-    db.session.flush()
-
+    new_parameters = data.get('parameters', [])
     if new_parameters:
         for param in new_parameters:
-            name = param.get('name')
-            value = param.get('value')
-            if name or value:
-                new_params = EquipmentParameter(
+            if param.get('name') and param.get('value'):
+                db.session.add(EquipmentParameter(
                     equipment_id=equipment.id,
-                    parameter_name=name,
-                    parameter_value=value
-                )
-                db.session.add(new_params)
+                    parameter_name=param['name'].strip(),
+                    parameter_value=param['value'].strip()
+                ))
 
     db.session.commit()
     return jsonify(equipment.to_dict())
@@ -489,25 +617,6 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
-# Add this test route to app.py
-@app.route('/test-email')
-@login_required
-def test_email():
-    try:
-        msg = Message(
-            subject="Flask-Mail Test",
-            recipients=["akapsyjr@gmail.com"],  # Use an email you can check
-            body="This is a test email from the Flask application."
-        )
-        mail.send(msg)
-        flash("Test email sent successfully!", 'success')
-    except Exception as e:
-        # Print the full error to the console for debugging
-        print(f"EMAIL ERROR: {e}")
-        flash(f"Failed to send email: {e}", 'error')
-    
-    return redirect(url_for('dashboard'))
-
 def send_due_maintenance_notifications():
     with app.app_context():
         today = datetime.utcnow().date()
@@ -593,22 +702,3 @@ def send_due_maintenance_notifications():
                 print(f"✅ Notification sent to {hou_email} (and admins) for {len(maintenance_list)} maintenance and {len(calibration_list)} calibration tasks.")
             except Exception as e:
                 print(f"❌ Failed to send notification to {hou_email}: {e}")
-
-def start_scheduler(app_context):
-    """Initializes and starts the background scheduler within the app context."""
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(
-        func=send_due_maintenance_notifications, 
-        trigger="interval", 
-        seconds=30
-    )
-    scheduler.start()
-    print("APScheduler started...")
-
-    # Shut down the scheduler when exiting the app
-    atexit.register(lambda: scheduler.shutdown())
-
-if __name__ == "__main__":
-    with app.app_context():
-        start_scheduler(app.app_context)
-    app.run(host="0.0.0.0", use_reloader=False, debug=False)

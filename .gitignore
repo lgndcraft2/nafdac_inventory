@@ -1,4 +1,3 @@
 venv/
 .env
-migrations/
 __pycache__

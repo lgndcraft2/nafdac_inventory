@@ -59,6 +59,7 @@
     {% endwith %}
 
     <form method="POST" action="{{ url_for('setup_branch') }}">
+        {{csrf_token()}}
         <div class="form-section">
             <h2>Step 1: Choose Branch</h2>
             <div class="form-group">
