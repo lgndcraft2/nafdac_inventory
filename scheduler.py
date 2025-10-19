@@ -1,6 +1,6 @@
 import time
 from apscheduler.schedulers.background import BackgroundScheduler
-from app import app, send_due_maintenance_notifications # Import your app and the job function
+from .app import app, send_due_maintenance_notifications # Import your app and the job function
 
 def start_scheduler():
     """Initializes and starts the background scheduler."""

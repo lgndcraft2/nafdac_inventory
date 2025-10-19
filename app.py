@@ -8,7 +8,7 @@ import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 import atexit
-from models import db, User, Equipment, EquipmentParameter, Unit, Branch
+from .models import db, User, Equipment, EquipmentParameter, Unit, Branch
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from flask_talisman import Talisman
