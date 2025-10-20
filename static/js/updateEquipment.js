@@ -330,6 +330,14 @@ class UpdateEquipmentFormValidator {
                     formData[fieldName] = this.fields[fieldName].value.trim();
                 }
             });
+            // Convert string numbers to actual integers
+            formData.unit_id = parseInt(formData.unit_id, 10);
+            formData.quantity = parseInt(formData.quantity, 10);
+            
+            // Handle case where unit might not be selected
+            if (isNaN(formData.unit_id)) {
+                formData.unit_id = null;
+            }
             formData.parameters = this.parameters;
 
             fetch(`/api/updateEquipment/${this.equipmentId}`, {
