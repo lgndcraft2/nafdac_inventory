@@ -1,7 +1,12 @@
+const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
 async function deleteRow(id) {
     try {
         const response = await fetch(`/api/delete/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
         });
 
         if (response.ok) {
@@ -82,7 +87,10 @@ function openCalibrationModal(){
 
 async function markMaintained(equipmentId) {
     const response = await fetch(`/api/maintain/${equipmentId}`, {
-        method: 'PUT'
+        method: 'PUT',
+        headers: {
+            'X-CSRFToken': csrfToken
+        }
     });
     if (response.ok) {
         window.location.reload();
@@ -93,7 +101,10 @@ async function markMaintained(equipmentId) {
 
 async function markCalibrated(equipmentId) {
     const response = await fetch(`/api/calibrate/${equipmentId}`, {
-        method: 'PUT'
+        method: 'PUT',
+        headers: {
+            'X-CSRFToken': csrfToken
+        }
     });
     if (response.ok) {
         window.location.reload();

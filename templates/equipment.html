@@ -187,7 +187,7 @@
         </div>
     {% endif %}
     </main>
-
+    <input id="csrf_token" name="csrf_token" type="hidden" value={{csrf_token()}}>
     <!-- Footer -->
     <footer class="card-footer">
         <a href="{{ request.referrer }}" class="back-link">← Go Back</a>

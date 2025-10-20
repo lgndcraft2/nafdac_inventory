@@ -79,6 +79,7 @@
             <button class="modal-button cancel">Cancel</button>
         </div>
     </div>
+    <input id="csrf_token" name="csrf_token" type="hidden" value={{csrf_token()}}>
 </div>
 <script src="{{ url_for('static', filename='js/adminPage.js') }}"></script>
 {% endblock %}

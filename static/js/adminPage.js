@@ -1,9 +1,8 @@
-// adminPage.js - NEW VERSION
-
 // --- Global variables ---
 let allUsers = [];
 let allUnits = [];
 let selectedUserId = null;
+const csrfToken = document.querySelector('input[name="csrf_token"]').value;
 
 // --- Helper Functions ---
 function formatDate(dateString) {
@@ -131,7 +130,7 @@ function closeModal() {
 async function deleteUser(userId) {
     if (confirm(`Are you sure you want to delete user ID ${userId}? This cannot be undone.`)) {
         try {
-            const response = await fetch(`/api/admin/delete_user/${userId}`, { method: 'DELETE' });
+            const response = await fetch(`/api/admin/delete_user/${userId}`, { method: 'DELETE', headers: { 'X-CSRFToken': csrfToken } });
             if (!response.ok) throw new Error('Server responded with an error.');
             await fetchData(); // Refresh data from server
         } catch (error) {
@@ -155,7 +154,10 @@ async function saveRoleChange() {
     try {
         const response = await fetch(`/api/admin/update_role/${selectedUserId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
             body: JSON.stringify({ role: newRole, unit_id: unitId })
         });
         
