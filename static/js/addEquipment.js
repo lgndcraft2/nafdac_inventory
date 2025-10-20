@@ -18,6 +18,7 @@ class EquipmentFormValidator {
         };
         this.submitBtn = this.form.querySelector('.submit-btn');
         this.successMessage = document.getElementById('success-message');
+        this.csrfToken = document.querySelector('input[name="csrf_token"]').value;
         this.validationTimeouts = {};
         this.uniqueIdValid = true;
         
@@ -317,7 +318,8 @@ class EquipmentFormValidator {
 
             fetch('/api/add_equipments', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json',
+                            'X-CSRFToken': this.csrfToken },
                 body: JSON.stringify(formData)
             })
             .then(response => {
