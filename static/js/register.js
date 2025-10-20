@@ -177,7 +177,7 @@ class RegistrationForm {
         const formData = {
             username: this.fields.username.value.trim(),
             email: this.fields.email.value.trim(),
-            unit: this.fields.unit.value.trim(),
+            unit: parseInt(this.fields.unit.value, 10),
             password: this.fields.password.value,
             roles: 'user' // Default role as per your model
         };
