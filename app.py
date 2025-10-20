@@ -56,8 +56,14 @@ app.permanent_session_lifetime = timedelta(minutes=60)
 db.init_app(app)
 migrate = Migrate(app, db)
 
+csp = {
+    'default-src': "'self'",
+    'img-src': ["'self'", "data:"], # Allows images from your domain AND data: URLs
+    'script-src': ["'self'", "'unsafe-inline'"] # Allows scripts from your domain AND inline scripts/handlers
+}
+
 csrf = CSRFProtect(app)
-Talisman(app, force_https=True, strict_transport_security=True)
+Talisman(app, force_https=True, strict_transport_security=True, content_security_policy=csp)
 limiter = Limiter(
     get_remote_address,
     app=app,
