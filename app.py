@@ -15,6 +15,7 @@ from flask_talisman import Talisman
 import logging
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from itsdangerous import URLSafeTimedSerializer
 
 load_dotenv()
 
@@ -59,7 +60,8 @@ migrate = Migrate(app, db)
 csp = {
     'default-src': "'self'",
     'img-src': ["'self'", "data:"], # Allows images from your domain AND data: URLs
-    'script-src': ["'self'", "'unsafe-inline'"] # Allows scripts from your domain AND inline scripts/handlers
+    'script-src': ["'self'", "'unsafe-inline'"], # Allows scripts from your domain AND inline scripts/handlers
+    'style-src': ["'self'", "'unsafe-inline'"] # Allows styles from your domain AND inline styles
 }
 
 csrf = CSRFProtect(app)
@@ -708,3 +710,69 @@ def send_due_maintenance_notifications():
                 print(f"✅ Notification sent to {hou_email} (and admins) for {len(maintenance_list)} maintenance and {len(calibration_list)} calibration tasks.")
             except Exception as e:
                 print(f"❌ Failed to send notification to {hou_email}: {e}")
+
+def get_reset_token(email):
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    return serializer.dumps(email, salt='password-reset-salt')
+
+def verify_reset_token(token, expiration=3600):
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    try:
+        email = serializer.loads(token, salt='password-reset-salt', max_age=expiration)
+        return email
+    except:
+        return None
+
+@app.route('/forgot-password', methods=['GET'])
+def forgot_password():
+    return render_template('forgot_password.html')
+
+@app.route('/api/forgot-password', methods=['POST'])
+@limiter.limit("5 per hour")
+def api_forgot_password():
+    data = request.get_json()
+    email = data.get('email')
+    
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "Email not found"}), 404
+    
+    token = get_reset_token(email)
+    reset_url = url_for('reset_password', token=token, _external=True)
+    
+    msg = Message('Password Reset Request',
+                recipients=[email],
+                body=f'''To reset your password, visit the following link:
+{reset_url}
+
+If you did not make this request, simply ignore this email.
+''')
+    
+    try:
+        mail.send(msg)
+        return jsonify({"message": "Reset email sent"}), 200
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return jsonify({"error": "Error sending email"}), 500
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    email = verify_reset_token(token)
+    if not email:
+        flash('Invalid or expired reset token', 'error')
+        return redirect(url_for('forgot_password'))
+    
+    if request.method == 'POST':
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        
+        password = request.json.get('password')
+        if not password or len(password) < 6:
+            return jsonify({"error": "Invalid password"}), 400
+        
+        user.set_password(password)
+        db.session.commit()
+        return jsonify({"message": "Password updated successfully"}), 200
+    
+    return render_template('reset_password.html')
