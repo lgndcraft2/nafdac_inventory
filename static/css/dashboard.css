@@ -489,9 +489,6 @@ body {
         width: 100%;
         justify-content: center;
     }
-    .location-column, .date-column {
-        display: none; /* Hide less critical columns on small screens */
-    }
 }
 
 @media (max-width: 480px) {
@@ -501,5 +498,12 @@ body {
 
     .filter-select {
         font-size: 16px; /* Prevents zoom on iOS */
+    }
+    .location-column, .date-column {
+      display: none;
+      /* Hide less critical columns on small screens */
+    }
+    .location-th, .cal-th {
+      display: none;
     }
 }
