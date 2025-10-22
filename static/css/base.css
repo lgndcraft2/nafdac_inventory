@@ -469,6 +469,10 @@ body {
         left: 1rem;
         min-width: auto;
     }
+
+    img {
+        width: 250px;
+    }
 }
 
 /* Large Screen Styles */
