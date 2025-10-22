@@ -791,3 +791,15 @@ def reset_password(token):
         return jsonify({"message": "Password updated successfully"}), 200
     
     return render_template('reset_password.html')
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template("404.html")
+
+@app.errorhandler(413)
+def page_not_found(e):
+    return render_template("413.html")
+
+@app.errorhandler(500)
+def page_not_found(e):
+    return render_template("500.html")
