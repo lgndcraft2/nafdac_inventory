@@ -338,6 +338,10 @@ body {
     color: var(--footer-text);
 }
 
+img {
+    width: 300px;
+}
+
 /* Tablet Styles */
 @media (max-width: 1024px) {
     .navbar {
@@ -440,6 +444,10 @@ body {
     .social-links {
         justify-content: center;
     }
+
+    img{
+        width: 180px;
+    }
 }
 
 /* Small Mobile Styles */
@@ -471,7 +479,7 @@ body {
     }
 
     img {
-        width: 50px;
+        width: 120px;
     }
 }
 
