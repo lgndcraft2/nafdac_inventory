@@ -16,9 +16,11 @@ import logging
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from itsdangerous import URLSafeTimedSerializer
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+
 
 load_dotenv()
-
 
 # Get the absolute path of the directory where this app.py file is located
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -38,14 +40,6 @@ if uri.startswith("postgres://"):
 
 app.config["SQLALCHEMY_DATABASE_URI"] = uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
-app.config['MAIL_PORT'] = os.environ.get('MAIL_PORT', 465)
-app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS')
-app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')  # your email
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')  # app password
-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
-app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL')
 
 
 app.config['SESSION_COOKIE_SECURE'] = True
@@ -72,8 +66,6 @@ limiter = Limiter(
     app=app,
     default_limits=["500 per day", "100 per hour"]
 )
-
-mail = Mail(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -701,13 +693,17 @@ def send_due_maintenance_notifications():
             recipients = list(set([hou_email] + admin_emails))
             print(recipients)
 
-            msg = Message(
+            from_email = os.environ.get('SENDGRID_FROM_EMAIL')
+            message = Mail(
+                from_email=from_email,
+                to_emails=recipients,
                 subject=subject,
-                recipients=recipients,
-                body=final_body
+                plain_text_content=final_body
             )
             try:
-                mail.send(msg)
+                sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+                response = sg.send(message)
+                print(f"Sent notification email. Status: {response.status_code}")
                 print(f"✅ Notification sent to {hou_email} (and admins) for {len(maintenance_list)} maintenance and {len(calibration_list)} calibration tasks.")
             except Exception as e:
                 print(f"❌ Failed to send notification to {hou_email}: {e}")
@@ -736,25 +732,42 @@ def api_forgot_password():
     
     user = User.query.filter_by(email=email).first()
     if not user:
-        return jsonify({"error": "Email not found"}), 404
+        # We still return 200 to prevent attackers from guessing emails
+        print(f"Password reset attempt for non-existent email: {email}")
+        return jsonify({"message": "If an account with this email exists, a reset link has been sent."}), 200
     
     token = get_reset_token(email)
     reset_url = url_for('reset_password', token=token, _external=True)
     
-    msg = Message('Password Reset Request',
-                recipients=[email],
-                body=f'''To reset your password, visit the following link:
+    # --- This is the new SendGrid Part ---
+    from_email = os.environ.get('SENDGRID_FROM_EMAIL')
+    body = f'''To reset your password, visit the following link:
 {reset_url}
 
 If you did not make this request, simply ignore this email.
-''')
+'''
+    
+    message = Mail(
+        from_email=from_email,
+        to_emails=email,
+        subject='Password Reset Request',
+        plain_text_content=body
+    )
     
     try:
-        mail.send(msg)
+        sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+        response = sg.send(message)
+        
+        # Optional: Log the success
+        print(f"Sent password reset. Status: {response.status_code}")
+        
         return jsonify({"message": "Reset email sent"}), 200
+    
     except Exception as e:
-        print(f"Error sending email: {e}")
-        app.logger.error(f"Error sending password reset email to {email}: {e}")
+        print(f"Error sending email via SendGrid: {e}")
+        # Log the detailed error from SendGrid if available
+        if hasattr(e, 'body'):
+            print(e.body)
         return jsonify({"error": "Error sending email"}), 500
 
 @app.route('/reset-password/<token>', methods=['GET', 'POST'])
