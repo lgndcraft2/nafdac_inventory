@@ -754,6 +754,7 @@ If you did not make this request, simply ignore this email.
         return jsonify({"message": "Reset email sent"}), 200
     except Exception as e:
         print(f"Error sending email: {e}")
+        app.logger.error(f"Error sending password reset email to {email}: {e}")
         return jsonify({"error": "Error sending email"}), 500
 
 @app.route('/reset-password/<token>', methods=['GET', 'POST'])
