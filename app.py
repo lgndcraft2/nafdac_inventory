@@ -46,9 +46,7 @@ app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')  # your email
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')  # app password
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
 app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL')
-app.config['MAIL_MAX_EMAILS'] = 5
-app.config['MAIL_TIMEOUT'] = 10
-app.config['MAIL_SUPPRESS_SEND'] = False
+
 
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['PREFERRED_URL_SCHEME'] = 'https'
