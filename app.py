@@ -693,9 +693,10 @@ def send_due_maintenance_notifications():
             recipients = list(set([hou_email] + admin_emails))
             print(recipients)
 
-            from_email = os.environ.get('SENDGRID_FROM_EMAIL')
+            from_email_address = os.environ.get('SENDGRID_FROM_EMAIL')
+            from_name = os.environ.get('SENDGRID_FROM_NAME')
             message = Mail(
-                from_email=from_email,
+                from_email=(from_email_address, from_name),
                 to_emails=recipients,
                 subject=subject,
                 plain_text_content=final_body
@@ -740,7 +741,9 @@ def api_forgot_password():
     reset_url = url_for('reset_password', token=token, _external=True)
     
     # --- This is the new SendGrid Part ---
-    from_email = os.environ.get('SENDGRID_FROM_EMAIL')
+    from_email_address = os.environ.get('SENDGRID_FROM_EMAIL')
+    from_name = os.environ.get('SENDGRID_FROM_NAME')
+    from_email = (from_email_address, from_name)
     body = f'''To reset your password, visit the following link:
 {reset_url}
 
