@@ -195,40 +195,67 @@ def setup_branch():
             return redirect(url_for('setup_branch'))
         
         branch_name = request.form.get('branch_name')
-        branch_adress = request.form.get('branch_address')
+        branch_address = request.form.get('branch_address')
         unit_name = request.form.get('unit_name')
         existing_branch_id = request.form.get('existing_branch')
 
         if not unit_name:
             flash('Unit name is required.', 'error')
             return redirect(url_for('setup_branch'))
+
         try:
-            target_branch_id = int(existing_branch_id) if existing_branch_id else None
+            target_branch_id = None
+            branch = None
+
             if existing_branch_id:
+                # --- Using an Existing Branch ---
+                target_branch_id = int(existing_branch_id)
                 branch = Branch.query.get(target_branch_id)
                 if not branch:
                     flash('Selected branch does not exist.', 'error')
                     return redirect(url_for('setup_branch'))
-                flash('Unit added to existing branch.', 'success')
             else:
-                if not branch_name or not branch_adress:
+                # --- Creating a New Branch ---
+                if not branch_name or not branch_address:
                     flash('Branch name and address are required for new branches.', 'error')
                     return redirect(url_for('setup_branch'))
-                branch = Branch(name=branch_name, address=branch_adress)
+                
+                # Check if this branch name already exists
+                existing_branch_check = Branch.query.filter_by(name=branch_name).first()
+                if existing_branch_check:
+                    flash(f"A branch with the name '{branch_name}' already exists.", 'error')
+                    return redirect(url_for('setup_branch'))
+                    
+                branch = Branch(name=branch_name, address=branch_address)
                 db.session.add(branch)
                 db.session.flush()  # Get branch.id before commit
                 target_branch_id = branch.id
             
+            # --- Check if Unit already exists in this Branch ---
+            # Now we have a valid target_branch_id and branch object
+            existing_unit = Unit.query.filter_by(name=unit_name, branch_id=target_branch_id).first()
+            if existing_unit:
+                flash(f"A unit named '{unit_name}' already exists in the '{branch.name}' branch.", 'error')
+                return redirect(url_for('setup_branch'))
+            # --- End of Check ---
+                
             new_unit = Unit(name=unit_name, branch_id=target_branch_id)
             db.session.add(new_unit)
-
             db.session.commit()
+            
+            # Move success message to after the commit
+            if existing_branch_id:
+                flash(f"Unit '{unit_name}' successfully added to branch '{branch.name}'.", 'success')
+            else:
+                flash(f"New branch '{branch.name}' and unit '{unit_name}' successfully created.", 'success')
         
         except Exception as e:
             db.session.rollback()
             flash('An error occurred. Please try again.', 'error')
             print(e)
+            
         return redirect(url_for('setup_branch'))
+    
     branches = Branch.query.order_by(Branch.name).all()
     return render_template('setup.html', branches=branches)
 
